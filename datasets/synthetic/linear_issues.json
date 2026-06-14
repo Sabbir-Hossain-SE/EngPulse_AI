@@ -1,0 +1,74 @@
+[
+  {
+    "id": "lin-pay-12",
+    "identifier": "PAY-12",
+    "title": "Refactor auth token handling",
+    "createdAt": "2026-03-05T09:00:00Z",
+    "updatedAt": "2026-06-01T10:00:00Z",
+    "estimate": 5,
+    "dueDate": "2026-06-30",
+    "state": { "name": "In Progress", "type": "started" },
+    "assignee": { "id": "lin-dave", "name": "Dave", "displayName": "dave", "email": "dave@acme.com" },
+    "team": { "key": "PAY", "name": "Payments" },
+    "project": { "name": "Payments Core" },
+    "labels": { "nodes": [{ "name": "auth" }] },
+    "history": {
+      "nodes": [
+        { "createdAt": "2026-03-10T10:00:00Z", "fromState": { "name": "Backlog" }, "toState": { "name": "Todo" } },
+        { "createdAt": "2026-03-20T10:00:00Z", "fromEstimate": 3, "toEstimate": 5 },
+        { "createdAt": "2026-04-01T10:00:00Z", "fromDueDate": "2026-05-15", "toDueDate": "2026-05-30" },
+        { "createdAt": "2026-05-10T10:00:00Z", "fromDueDate": "2026-05-30", "toDueDate": "2026-06-15" },
+        { "createdAt": "2026-06-01T10:00:00Z", "fromDueDate": "2026-06-15", "toDueDate": "2026-06-30" }
+      ]
+    }
+  },
+  {
+    "id": "lin-pay-20",
+    "identifier": "PAY-20",
+    "title": "Checkout timeout flake",
+    "createdAt": "2026-06-08T09:00:00Z",
+    "updatedAt": "2026-06-12T15:00:00Z",
+    "estimate": 2,
+    "dueDate": null,
+    "state": { "name": "Done", "type": "completed" },
+    "assignee": { "id": "lin-erin", "name": "Erin", "displayName": "erin", "email": "erin@acme.com" },
+    "team": { "key": "PAY", "name": "Payments" },
+    "project": { "name": "Payments Core" },
+    "labels": { "nodes": [{ "name": "ci" }] },
+    "history": {
+      "nodes": [
+        { "createdAt": "2026-06-12T14:30:00Z", "fromState": { "name": "In Progress" }, "toState": { "name": "Done" } }
+      ]
+    }
+  },
+  {
+    "id": "lin-pay-21",
+    "identifier": "PAY-21",
+    "title": "Add payment retry",
+    "createdAt": "2026-06-03T09:00:00Z",
+    "updatedAt": "2026-06-08T16:00:00Z",
+    "estimate": 3,
+    "dueDate": "2026-06-25",
+    "state": { "name": "In Progress", "type": "started" },
+    "assignee": { "id": "lin-dave", "name": "Dave", "displayName": "dave", "email": "dave@acme.com" },
+    "team": { "key": "PAY", "name": "Payments" },
+    "project": { "name": "Payments Core" },
+    "labels": { "nodes": [] },
+    "history": { "nodes": [] }
+  },
+  {
+    "id": "lin-pay-22",
+    "identifier": "PAY-22",
+    "title": "Refactor settlement ledger",
+    "createdAt": "2026-06-09T09:00:00Z",
+    "updatedAt": "2026-06-09T09:00:00Z",
+    "estimate": null,
+    "dueDate": null,
+    "state": { "name": "Backlog", "type": "backlog" },
+    "assignee": { "id": "lin-grace", "name": "Grace", "displayName": "grace", "email": "grace@acme.com" },
+    "team": { "key": "PAY", "name": "Payments" },
+    "project": { "name": "Payments Core" },
+    "labels": { "nodes": [] },
+    "history": { "nodes": [] }
+  }
+]

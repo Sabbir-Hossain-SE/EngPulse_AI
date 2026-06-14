@@ -1,0 +1,19 @@
+{
+  "1": [],
+  "2": [
+    {
+      "id": 770000001,
+      "user": { "login": "dave", "id": 2001 },
+      "state": "APPROVED",
+      "submitted_at": "2026-06-12T13:00:00Z"
+    }
+  ],
+  "3": [
+    {
+      "id": 770000002,
+      "user": { "login": "erin", "id": 2002 },
+      "state": "APPROVED",
+      "submitted_at": "2026-06-08T15:00:00Z"
+    }
+  ]
+}

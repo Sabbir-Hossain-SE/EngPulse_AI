@@ -1,0 +1,59 @@
+[
+  {
+    "id": 666000001,
+    "number": 1,
+    "title": "Refactor auth token parsing",
+    "state": "open",
+    "html_url": "https://github.com/acme/payments/pull/1",
+    "head": { "sha": "auth1sha", "ref": "dave/pay-12-auth-refactor" },
+    "body": "Refactors token parsing for clarity. No issue keyword in the body.",
+    "user": { "login": "dave", "id": 2001 },
+    "created_at": "2026-05-01T09:00:00Z",
+    "updated_at": "2026-05-02T09:00:00Z",
+    "merged_at": null,
+    "closed_at": null,
+    "additions": 300,
+    "deletions": 50,
+    "changed_files": 6,
+    "requested_reviewers": [
+      { "login": "erin", "id": 2002 },
+      { "login": "frank", "id": 2003 }
+    ]
+  },
+  {
+    "id": 666000002,
+    "number": 2,
+    "title": "Fix checkout timeout flake",
+    "state": "open",
+    "html_url": "https://github.com/acme/payments/pull/2",
+    "head": { "sha": "f1aky00sha", "ref": "erin/pay-20-checkout" },
+    "body": "Closes PAY-20. Stabilizes the checkout timeout path.",
+    "user": { "login": "erin", "id": 2002 },
+    "created_at": "2026-06-10T10:00:00Z",
+    "updated_at": "2026-06-12T14:00:00Z",
+    "merged_at": null,
+    "closed_at": null,
+    "additions": 40,
+    "deletions": 12,
+    "changed_files": 2,
+    "requested_reviewers": [{ "login": "dave", "id": 2001 }]
+  },
+  {
+    "id": 666000003,
+    "number": 3,
+    "title": "Add payment retry",
+    "state": "closed",
+    "html_url": "https://github.com/acme/payments/pull/3",
+    "head": { "sha": "retry00sha", "ref": "dave/retry" },
+    "body": "Part of PAY-21 epic.",
+    "user": { "login": "dave", "id": 2001 },
+    "created_at": "2026-06-05T08:00:00Z",
+    "updated_at": "2026-06-08T16:00:00Z",
+    "merged_at": "2026-06-08T16:00:00Z",
+    "closed_at": "2026-06-08T16:00:00Z",
+    "additions": 80,
+    "deletions": 5,
+    "changed_files": 3,
+    "requested_reviewers": [{ "login": "erin", "id": 2002 }]
+  }
+]

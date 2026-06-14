@@ -184,6 +184,7 @@ def ingest_github(
     commit_limit: int = 100,
     run_limit: int = 100,
     dry_run: bool = False,
+    fixtures_dir: str | None = None,
 ) -> IngestReport:
     """Ingest one repo's PRs, reviews, commits, and CI runs end-to-end."""
 
@@ -191,7 +192,7 @@ def ingest_github(
         raise ValueError(f"Expected repo as 'owner/name', got '{repo}'")
     owner, name = repo.split("/", 1)
 
-    client = build_client(source)
+    client = build_client(source, fixtures_dir)
     bundle = asyncio.run(_fetch(client, owner, name, pr_limit, commit_limit, run_limit))
     log.info(
         "Fetched %s: %d PRs, %d commits, %d runs",
