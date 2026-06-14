@@ -688,6 +688,7 @@ def ask_cmd(
 @app.command("evaluate")
 def evaluate_cmd(
     out: str = typer.Option(None, "--out", help="write the report as JSON to this path"),
+    report_path: str = typer.Option(None, "--report", help="write a markdown eval report to this path"),
 ) -> None:
     """Run all detectors + entity resolution on the labeled corpus and score them.
 
@@ -732,6 +733,17 @@ def evaluate_cmd(
         }
         Path(out).write_text(_json.dumps(payload, indent=2))
         console.print(f"[green]✓[/green] wrote {out}")
+
+    if report_path:
+        from engpulse.eval.harness import check_consistency
+        from engpulse.eval.report import render_eval_report
+
+        deterministic = check_consistency()
+        Path(report_path).write_text(render_eval_report(report, deterministic))
+        console.print(
+            f"[green]✓[/green] wrote {report_path}"
+            + ("" if deterministic else " [yellow](non-deterministic!)[/yellow]")
+        )
 
 
 @app.command("corpus-check")

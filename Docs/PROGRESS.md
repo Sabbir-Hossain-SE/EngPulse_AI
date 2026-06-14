@@ -460,12 +460,46 @@ not visually verified in this environment; it's wired to the tested API.)
 
 ---
 
-## What's next
+## Module 8 — Eval harness completion + README ✅ (complete)
 
-⬜ **Module 8 — Eval harness completion + README** (PRD §13, Milestone 6):
-broaden the labeled corpus toward the headline targets, finalize the eval report,
-and write the README with the headline metrics + design-decision write-up that
-make the build read as senior. The measurement loop already exists (Module 3.4 /
-5.2) — this widens coverage and packages it.
+### Sub-step 8.1 — Eval report + regression check ✅
 
-> Per working agreement: checkpoint each sub-step before starting the next.
+**What we built:** A consolidated **markdown eval report** (`engpulse.eval.report`)
+packaging all six detector/resolution tasks + the agent metrics, and a formal
+**determinism/regression** guard (`check_consistency` — the full evaluation is
+identical across runs). Exposed via `engpulse evaluate --report PATH`; committed
+artifact at [Docs/EVAL_REPORT.md](EVAL_REPORT.md).
+
+**Verify:**
+```bash
+pytest                                   # 102 passed
+engpulse evaluate --report Docs/EVAL_REPORT.md
+```
+
+**Verified output:** report shows 6 tasks at 1.00/1.00 (macro 1.00/1.00), agent
+recall/faithfulness/abstention 1.00, determinism = yes.
+
+### Sub-step 8.2 — README finalization ✅
+
+**What we built:** The canonical [README.md](../README.md) — headline results,
+core principle (fact/inference separation), full architecture diagram, an
+offline zero-services quick start, the real-stack runbook, a Module 1–8 map, the
+key design decisions, CLI reference, project layout, and scope (MVP vs Phase 2).
+
+**Verify:**
+```bash
+pytest                 # 102 passed
+engpulse --help        # all 19 commands present and documented
+```
+
+---
+
+## ✅ MVP COMPLETE — Modules 1–8
+
+The full pipeline — ingest → resolve → detect → score → synthesize → ask → serve
+— is built, **102 tests passing**, scored against a labeled set (macro 1.00/1.00),
+deterministic, fully traced, and runnable **offline with zero services**.
+
+**Possible next steps (Phase 2):** broaden the labeled corpus toward the 200-case
+target · Slack team-signal + tech-debt hotspot scorer · live webhooks · validate
+the live Ollama + dashboard paths end-to-end on real repos.
