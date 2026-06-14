@@ -104,9 +104,15 @@ class FakeEmbeddingClient:
         return [self._embed_one(t) for t in texts]
 
 
-def build_embedding_client(source: str = "fake") -> EmbeddingClient:
+def build_embedding_client(source: str = "fake", traced: bool = True) -> EmbeddingClient:
     if source == "ollama":
-        return OllamaEmbeddingClient()
-    if source == "fake":
-        return FakeEmbeddingClient()
-    raise ValueError(f"Unknown embedding source '{source}' (expected 'ollama' or 'fake')")
+        inner: EmbeddingClient = OllamaEmbeddingClient()
+    elif source == "fake":
+        inner = FakeEmbeddingClient()
+    else:
+        raise ValueError(f"Unknown embedding source '{source}' (expected 'ollama' or 'fake')")
+    if traced:
+        from engpulse.llm.traced import TracedEmbeddingClient
+
+        return TracedEmbeddingClient(inner)
+    return inner

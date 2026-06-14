@@ -395,7 +395,7 @@ IC digest = the stalled-PR/issue execution items.
 
 ---
 
-## Module 7 — API, Dashboard & Observability 🔨 (in progress)
+## Module 7 — API, Dashboard & Observability ✅ (complete)
 
 ### Sub-step 7.1 — API core ✅
 
@@ -417,10 +417,55 @@ pytest                                                  # 96 passed
 uvicorn run returned score 70.0/At Risk and a grounded `/ask` answer citing
 `metric:auth/tokens.py` (and abstained on the unanswerable question).
 
-### Remaining sub-steps
-- ⬜ **7.2 — Observability + streaming**: pluggable Langfuse tracer (no-op
-  default) on LLM calls + pipeline steps; SSE streaming for `/ask`.
-- ⬜ **7.3 — Dashboard**: role-based UI over the API (tech TBD — decide at the
-  7.3 checkpoint: full React/Next vs lightweight).
+### Sub-step 7.2 — Observability + streaming ✅
+
+**What we built:** A pluggable tracer (`engpulse.obs`: `NoOpTracer` default ·
+`RecordingTracer` for tests · best-effort `LangfuseTracer`) with a
+`span(name, **meta)` context manager; `Traced{Chat,Embedding}Client` wrappers so
+the factories emit a span on **every** LLM call; and `agent.ask_events` — a
+traced generator that streams reasoning stages, exposed at `POST /ask/stream` as
+**Server-Sent Events**.
+
+**Verify (offline):**
+```bash
+pytest   # 99 passed
+# /ask/stream emits: event: plan → tool → answer → final
+# RecordingTracer captures llm.embed, llm.chat, tool.*, agent.ask — no silent calls
+```
+
+**Verified output:** SSE stream shows plan→tool→answer→final; trace spans cover
+every embed + chat call plus tool/agent spans. Langfuse auto-activates when
+`LANGFUSE_PUBLIC_KEY`/`SECRET_KEY` are set (else no-op).
+
+### Sub-step 7.3 — Dashboard (React/Next.js) ✅
+
+**What we built:** A role-based Next.js (App Router, TypeScript) dashboard in
+`frontend/` over the API — health score + breakdown, role-filtered alerts/digest,
+ownership / bus-factor map, and a **streaming Ask EngPulse box** (consumes
+`/ask/stream` SSE via fetch + ReadableStream). API gained CORS for the dashboard
+origin. Typed API client; minimal-deps (next/react only).
+
+**Verify:**
+```bash
+# API
+uvicorn engpulse.api.main:app --port 8000
+# dashboard
+cd frontend && npm install && npm run build   # ✓ compiles + type-checks
+npm run dev                                    # http://localhost:3000
+```
+
+**Verified output:** `next build` compiles cleanly (types valid, static pages
+generated); `next start` serves HTTP 200 with the EngPulse shell. (Browser UI
+not visually verified in this environment; it's wired to the tested API.)
+
+---
+
+## What's next
+
+⬜ **Module 8 — Eval harness completion + README** (PRD §13, Milestone 6):
+broaden the labeled corpus toward the headline targets, finalize the eval report,
+and write the README with the headline metrics + design-decision write-up that
+make the build read as senior. The measurement loop already exists (Module 3.4 /
+5.2) — this widens coverage and packages it.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

@@ -89,9 +89,15 @@ class FakeChatClient:
         return json.dumps(payload)
 
 
-def build_chat_client(source: str = "fake") -> ChatClient:
+def build_chat_client(source: str = "fake", traced: bool = True) -> ChatClient:
     if source == "ollama":
-        return OllamaChatClient()
-    if source == "fake":
-        return FakeChatClient()
-    raise ValueError(f"Unknown chat source '{source}' (expected 'ollama' or 'fake')")
+        inner: ChatClient = OllamaChatClient()
+    elif source == "fake":
+        inner = FakeChatClient()
+    else:
+        raise ValueError(f"Unknown chat source '{source}' (expected 'ollama' or 'fake')")
+    if traced:
+        from engpulse.llm.traced import TracedChatClient
+
+        return TracedChatClient(inner)
+    return inner

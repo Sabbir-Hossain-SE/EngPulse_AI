@@ -55,47 +55,75 @@ class AskAgent:
         self._tools = build_registry()
 
     def ask(self, question: str) -> AgentAnswer:
-        if needs_clarification(question):
-            return AgentAnswer(question=question, clarifying_question=_CLARIFY)
+        final: dict | None = None
+        for event in self.ask_events(question):
+            if event["stage"] == "final":
+                final = event["answer"]
+        return AgentAnswer.model_validate(final)
 
-        plan = self._planner.plan(question)
+    def ask_events(self, question: str):
+        """Stream the reasoning as stage events; the last is ``stage='final'``.
 
-        evidence: list[EvidenceItem] = []
-        seen: set[str] = set()
-        tool_calls: list[ToolCall] = []
-        for call in plan:
-            tool = self._tools.get(call.tool)
-            if tool is None:
-                continue
-            fresh = []
-            for item in tool.run(self._ctx, call.args):
-                if item.ref not in seen:
-                    seen.add(item.ref)
-                    fresh.append(item)
-            evidence.extend(fresh)
-            tool_calls.append(ToolCall(tool=call.tool, args=call.args,
-                                       evidence_count=len(fresh)))
+        Each step is wrapped in a trace span, so the whole pipeline is observable.
+        """
 
-        if not evidence:
-            return AgentAnswer(question=question, plan=tool_calls, abstained=True)
+        from engpulse.obs import get_tracer
 
-        gen: GeneratedAnswer = generate_structured(
-            self._chat, _answer_messages(question, evidence), schema=GeneratedAnswer
-        )
-        grounded, dropped = check_grounding(gen, {e.ref for e in evidence})
-        if dropped:
-            log.warning("Agent dropped %d ungrounded claim(s)", len(dropped))
-        if not grounded:
-            return AgentAnswer(question=question, plan=tool_calls,
-                               evidence=evidence, abstained=True)
+        tracer = get_tracer()
+        with tracer.span("agent.ask", question=question):
+            if needs_clarification(question):
+                ans = AgentAnswer(question=question, clarifying_question=_CLARIFY)
+                yield {"stage": "clarify", "clarifying_question": _CLARIFY}
+                yield {"stage": "final", "answer": ans.model_dump()}
+                return
 
-        grounded_ratio = len(grounded) / len(gen.claims) if gen.claims else 0.0
-        citations = sorted({r for c in grounded for r in c.evidence_refs})
-        return AgentAnswer(
-            question=question, plan=tool_calls, answer=gen.answer, claims=grounded,
-            citations=citations, confidence=round(min(gen.confidence, grounded_ratio), 4),
-            evidence=evidence, abstained=False,
-        )
+            plan = self._planner.plan(question)
+            yield {"stage": "plan", "tools": [c.tool for c in plan]}
+
+            evidence: list[EvidenceItem] = []
+            seen: set[str] = set()
+            tool_calls: list[ToolCall] = []
+            for call in plan:
+                tool = self._tools.get(call.tool)
+                if tool is None:
+                    continue
+                with tracer.span(f"tool.{call.tool}"):
+                    items = tool.run(self._ctx, call.args)
+                fresh = [i for i in items if i.ref not in seen]
+                for i in fresh:
+                    seen.add(i.ref)
+                evidence.extend(fresh)
+                tool_calls.append(ToolCall(tool=call.tool, args=call.args,
+                                           evidence_count=len(fresh)))
+                yield {"stage": "tool", "tool": call.tool, "evidence": len(fresh)}
+
+            if not evidence:
+                ans = AgentAnswer(question=question, plan=tool_calls, abstained=True)
+                yield {"stage": "final", "answer": ans.model_dump()}
+                return
+
+            gen: GeneratedAnswer = generate_structured(
+                self._chat, _answer_messages(question, evidence), schema=GeneratedAnswer
+            )
+            grounded, dropped = check_grounding(gen, {e.ref for e in evidence})
+            if dropped:
+                log.warning("Agent dropped %d ungrounded claim(s)", len(dropped))
+            if not grounded:
+                ans = AgentAnswer(question=question, plan=tool_calls,
+                                  evidence=evidence, abstained=True)
+                yield {"stage": "final", "answer": ans.model_dump()}
+                return
+
+            grounded_ratio = len(grounded) / len(gen.claims) if gen.claims else 0.0
+            citations = sorted({r for c in grounded for r in c.evidence_refs})
+            ans = AgentAnswer(
+                question=question, plan=tool_calls, answer=gen.answer, claims=grounded,
+                citations=citations,
+                confidence=round(min(gen.confidence, grounded_ratio), 4),
+                evidence=evidence, abstained=False,
+            )
+            yield {"stage": "answer", "text": ans.answer, "citations": ans.citations}
+            yield {"stage": "final", "answer": ans.model_dump()}
 
 
 def build_agent(

@@ -7,12 +7,19 @@ Ask EngPulse endpoints arrive with their respective modules.
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from engpulse import __version__
 from engpulse.api.routes import ask, projects
 from engpulse.config import get_settings
 
 app = FastAPI(title="EngPulse AI", version=__version__)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[get_settings().dashboard_url],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(projects.router)
 app.include_router(ask.router)
 
