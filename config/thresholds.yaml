@@ -1,0 +1,10 @@
+# EngPulse detector thresholds — admin-tunable, no values hard-coded in code.
+# Loaded into engpulse.metrics.thresholds.Thresholds; any key omitted here falls
+# back to the model default.
+
+pr_flow:
+  stale_pr_days: 7          # open PR with no activity for this many days → stale
+  abandoned_pr_days: 30     # open PR untouched this long → abandoned
+  oversized_pr_lines: 500   # additions + deletions above this → oversized
+  oversized_pr_files: 20    # changed files above this → oversized
+  reviewer_concentration: 0.5  # one reviewer handling > this share → bottleneck
