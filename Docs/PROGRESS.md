@@ -78,10 +78,35 @@ docker compose up -d postgres && engpulse init-db && \
 (2026-06-05 → 2026-06-20) and 1 re-estimation; assignees keyed by tracker
 id + email; re-run idempotent.
 
-### Remaining sub-steps
-- ⬜ **2.3 — Entity resolution**: PR↔Issue (branch/key/body) + cross-system
-  identity merge (GitHub↔Linear by email), with a measurable resolution report.
-- ⬜ **2.4 — Labeled fixtures**: synthetic corpus with injected problems + labels
-  (eval seed).
+### Sub-step 2.3 — Entity resolution ✅
+
+**What we built:** Two deterministic, confidence-scored resolvers over the
+ingested data. **PR↔Issue**: extract Linear keys from a PR's body (closing
+keyword vs mention), branch ref, and title; link to the matching issue and
+record method + confidence (only keys that exist as issues are linked, for
+precision). **GitHub↔Linear identity merge**: collapse the separate Person rows
+for one human, keyed by email, repointing every FK (author, reviewers, commits,
+assignee). Connectors now create source-scoped people; the merge is the single
+explicit resolution step (idempotent). New CLI: `engpulse resolve`; PRs gained
+`head_ref`/`body`/`linked_issue_method`/`linked_issue_confidence`; commits carry
+author email so GitHub people are mergeable.
+
+**Verify:**
+```bash
+pytest                                                                   # 33 passed
+docker compose up -d postgres && engpulse init-db && \
+  engpulse ingest-github --repo engpulse-demo/demo-repo --source fixture && \
+  engpulse ingest-linear --source fixture --team ENG && \
+  engpulse resolve
+```
+
+**Verified output:** 3/3 PRs linked (branch / body_keyword / body_mention);
+identities 5→3 (alice & bob each carry both GitHub + Linear ids, carol
+untouched); FKs repointed (alice→2 issues, bob→1); re-run idempotent.
+
+### Remaining sub-step
+- ⬜ **2.4 — Labeled fixtures**: synthetic corpus with injected problems
+  (stale PR, flaky test, deadline drift, single-owner module) + `labels.json`
+  — the eval-harness seed. Closes out Module 2.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

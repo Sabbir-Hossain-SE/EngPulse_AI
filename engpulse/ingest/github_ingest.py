@@ -123,7 +123,9 @@ def _persist(session: Session, scope: str, bundle: _Bundle) -> IngestReport:
     with audit_run(session, SOURCE, "commits", scope) as counters:
         for dto in bundle.commits:
             counters.seen += 1
-            author = upsert_person(session, dto.author_id, dto.author_login)
+            author = upsert_person(
+                session, dto.author_id, dto.author_login, dto.author_email
+            )
             upsert_commit(session, dto, repo_id=repo.id,
                           author_id=author.id if author else None)
             counters.written += 1

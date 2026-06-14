@@ -103,10 +103,14 @@ class PullRequest(TimestampMixin, Base):
     state: Mapped[str | None] = mapped_column(String(32))
     html_url: Mapped[str | None] = mapped_column(String(1024))
     head_sha: Mapped[str | None] = mapped_column(String(64), index=True)
+    head_ref: Mapped[str | None] = mapped_column(String(512))
+    body: Mapped[str | None] = mapped_column(Text)
     source_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     author_id: Mapped[int | None] = mapped_column(ForeignKey("people.id"))
     linked_issue_id: Mapped[int | None] = mapped_column(ForeignKey("issues.id"))
+    linked_issue_method: Mapped[str | None] = mapped_column(String(64))
+    linked_issue_confidence: Mapped[float | None] = mapped_column(Float)
 
     pr_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
