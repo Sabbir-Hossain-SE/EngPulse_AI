@@ -23,7 +23,10 @@ from engpulse.db.models import CIRun, Commit, Issue, Person, PullRequest, Reposi
 
 
 def upsert_person(
-    session: Session, github_user_id: int | None, login: str | None
+    session: Session,
+    github_user_id: int | None,
+    login: str | None,
+    email: str | None = None,
 ) -> Person | None:
     if github_user_id is None and not login:
         return None
@@ -34,7 +37,9 @@ def upsert_person(
         stmt = stmt.where(Person.github_login == login)
     person = session.scalars(stmt).first()
     if person is None:
-        person = Person(github_user_id=github_user_id, github_login=login, name=login)
+        person = Person(
+            github_user_id=github_user_id, github_login=login, name=login, email=email
+        )
         session.add(person)
         session.flush()
     else:  # backfill identity fields if a sparser record was created earlier
@@ -42,6 +47,8 @@ def upsert_person(
             person.github_user_id = github_user_id
         if not person.github_login and login:
             person.github_login = login
+        if not person.email and email:
+            person.email = email
     return person
 
 
@@ -59,12 +66,14 @@ def upsert_person_tracker(
 
     if not tracker_id and not email:
         return None
-    person = None
+    # Key by tracker id (stable per Linear user). Only fall back to email when no
+    # tracker id exists — cross-system GitHub↔Linear merging is the job of the
+    # explicit resolution step (2.3), not the connector.
     if tracker_id:
         person = session.scalars(
             select(Person).where(Person.tracker_id == tracker_id)
         ).first()
-    if person is None and email:
+    else:
         person = session.scalars(select(Person).where(Person.email == email)).first()
     if person is None:
         person = Person(tracker_id=tracker_id, email=email, name=name)
@@ -142,8 +151,8 @@ def upsert_pull_request(
         session.add(pr)
     else:
         _apply(pr, norm, (
-            "github_id", "title", "state", "html_url", "head_sha", "source_updated_at",
-            "author_id", "pr_created_at", "merged_at", "closed_at",
+            "github_id", "title", "state", "html_url", "head_sha", "head_ref", "body",
+            "source_updated_at", "author_id", "pr_created_at", "merged_at", "closed_at",
             "additions", "deletions", "changed_files",
             "first_review_at", "review_rounds",
         ))

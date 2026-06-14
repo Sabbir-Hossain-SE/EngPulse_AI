@@ -181,6 +181,40 @@ def ingest_linear_cmd(
         _print_audit(report.audits)
 
 
+@app.command("resolve")
+def resolve_cmd(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="compute links/merges but roll back (no writes)"
+    ),
+) -> None:
+    """Entity resolution: link PRs↔issues and merge GitHub↔Linear identities."""
+
+    from engpulse.resolve import resolve_entities
+
+    console.print(f"Resolving entities (dry_run={dry_run})…")
+    report = resolve_entities(dry_run=dry_run)
+
+    pr = report.pr_issue
+    pr_table = Table(title="PR ↔ Issue linking")
+    pr_table.add_column("Metric", style="cyan")
+    pr_table.add_column("Value", style="white", justify="right")
+    pr_table.add_row("Pull requests", str(pr["total_prs"]))
+    pr_table.add_row("Linked", str(pr["linked"]))
+    pr_table.add_row("Unlinked PR #s", ", ".join(map(str, pr["unlinked"])) or "—")
+    pr_table.add_row("By method", ", ".join(f"{k}={v}" for k, v in pr["by_method"].items()) or "—")
+    console.print(pr_table)
+
+    ident = report.identity
+    id_table = Table(title="Identity merge (GitHub ↔ Linear)")
+    id_table.add_column("Metric", style="cyan")
+    id_table.add_column("Value", style="white", justify="right")
+    id_table.add_row("People before", str(ident["people_before"]))
+    id_table.add_row("People after", str(ident["people_after"]))
+    id_table.add_row("Merged", str(ident["merged"]))
+    id_table.add_row("By method", ", ".join(f"{k}={v}" for k, v in ident["by_method"].items()) or "—")
+    console.print(id_table)
+
+
 def _print_audit(audits: list[dict]) -> None:
     audit_table = Table(title="Sync audit (per resource)")
     audit_table.add_column("Resource", style="cyan")

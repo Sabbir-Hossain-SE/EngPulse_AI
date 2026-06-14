@@ -63,6 +63,8 @@ def to_pull_request(
         state=dto.state,
         html_url=dto.html_url,
         head_sha=dto.head_sha,
+        head_ref=dto.head_ref,
+        body=dto.body,
         source_updated_at=dto.updated_at,
         author_id=author_id,
         pr_created_at=dto.created_at,

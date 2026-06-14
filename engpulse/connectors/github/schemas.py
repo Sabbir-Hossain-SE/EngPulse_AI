@@ -42,6 +42,8 @@ class PullRequestDTO(BaseModel):
     state: str | None = None
     html_url: str | None = None
     head_sha: str | None = None
+    head_ref: str | None = None
+    body: str | None = None
     author_login: str | None = None
     author_id: int | None = None
     created_at: datetime | None = None
@@ -64,6 +66,8 @@ class PullRequestDTO(BaseModel):
             state=data.get("state"),
             html_url=data.get("html_url"),
             head_sha=head.get("sha"),
+            head_ref=head.get("ref"),
+            body=data.get("body"),
             author_login=user.get("login"),
             author_id=user.get("id"),
             created_at=data.get("created_at"),
@@ -103,6 +107,7 @@ class CommitDTO(BaseModel):
     message: str | None = None
     author_login: str | None = None
     author_id: int | None = None
+    author_email: str | None = None
     committed_at: datetime | None = None
 
     @classmethod
@@ -115,6 +120,7 @@ class CommitDTO(BaseModel):
             message=commit.get("message"),
             author_login=author.get("login"),
             author_id=author.get("id"),
+            author_email=commit_author.get("email"),
             committed_at=commit_author.get("date"),
         )
 
