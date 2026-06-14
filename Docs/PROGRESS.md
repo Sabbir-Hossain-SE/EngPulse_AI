@@ -395,11 +395,32 @@ IC digest = the stalled-PR/issue execution items.
 
 ---
 
-## What's next
+## Module 7 — API, Dashboard & Observability 🔨 (in progress)
 
-⬜ **Module 7 — API, Dashboard & Observability** (PRD §8.L, Milestone 5):
-FastAPI endpoints (projects/scores/insights + Ask EngPulse over SSE), Langfuse
-tracing on every LLM call, caching, and a role-based React dashboard. Surfaces
-everything built in Modules 1–6 over HTTP.
+### Sub-step 7.1 — API core ✅
+
+**What we built:** FastAPI endpoints surfacing Modules 1–6 — `GET /projects`,
+`/score`, `/alerts`, `/digest`, `/knowledge` and `POST /ask` (Ask EngPulse) plus
+`/health` `/readiness` `/metrics`. DB sessions are dependency-injected (tests
+override to the ephemeral corpus DB), an in-memory TTL cache backs the retriever,
+and the LLM backend is config-driven (`LLM_SOURCE=fake` default → runs offline).
+
+**Verify (offline):**
+```bash
+pytest                                                  # 96 passed
+# live: DATABASE_URL=... uvicorn engpulse.api.main:app
+#   GET /score?repo=acme/payments&team=PAY&as_of=2026-06-14   → 70.0 At Risk
+#   POST /ask {"question":"who owns the auth tokens module", ...}
+```
+
+**Verified output:** TestClient covers every endpoint over the corpus; a live
+uvicorn run returned score 70.0/At Risk and a grounded `/ask` answer citing
+`metric:auth/tokens.py` (and abstained on the unanswerable question).
+
+### Remaining sub-steps
+- ⬜ **7.2 — Observability + streaming**: pluggable Langfuse tracer (no-op
+  default) on LLM calls + pipeline steps; SSE streaming for `/ask`.
+- ⬜ **7.3 — Dashboard**: role-based UI over the API (tech TBD — decide at the
+  7.3 checkpoint: full React/Next vs lightweight).
 
 > Per working agreement: checkpoint each sub-step before starting the next.

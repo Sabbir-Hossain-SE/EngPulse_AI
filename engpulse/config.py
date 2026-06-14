@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_chat_model: str = "llama3.1"
     ollama_embed_model: str = "nomic-embed-text"
+    # Which LLM backend the API/agent use: "fake" (offline) or "ollama" (live).
+    llm_source: str = "fake"
 
     # --- Redis / Celery ----------------------------------------------------
     redis_url: str = "redis://localhost:6379/0"
