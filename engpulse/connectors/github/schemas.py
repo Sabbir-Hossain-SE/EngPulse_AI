@@ -134,6 +134,10 @@ class CIRunDTO(BaseModel):
     run_attempt: int | None = None
     run_started_at: datetime | None = None
     updated_at: datetime | None = None
+    # Failing test names. The live Actions runs endpoint does not provide these;
+    # they come from a log/JUnit parser (or the synthetic corpus) — consumed by
+    # the test-level flaky detector when present.
+    failed_tests: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: dict) -> "CIRunDTO":
@@ -146,4 +150,5 @@ class CIRunDTO(BaseModel):
             run_attempt=data.get("run_attempt"),
             run_started_at=data.get("run_started_at"),
             updated_at=data.get("updated_at"),
+            failed_tests=data.get("failed_tests") or [],
         )

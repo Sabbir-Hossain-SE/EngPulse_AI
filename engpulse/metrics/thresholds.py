@@ -23,8 +23,15 @@ class PRFlowThresholds(BaseModel):
     reviewer_concentration: float = 0.5
 
 
+class CIHealthThresholds(BaseModel):
+    flaky_min_runs: int = 2
+    duration_regression_pct: float = 0.5
+    duration_min_runs: int = 3
+
+
 class Thresholds(BaseModel):
     pr_flow: PRFlowThresholds = PRFlowThresholds()
+    ci_health: CIHealthThresholds = CIHealthThresholds()
 
 
 def load_thresholds(path: str | Path | None = None) -> Thresholds:
