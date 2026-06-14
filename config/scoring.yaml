@@ -1,0 +1,26 @@
+# Project-health scoring model — fully transparent and admin-tunable (PRD §10).
+# A sub-score starts at 100 and loses points per flag by severity; the composite
+# is the weighted average of the sub-scores, then mapped to a status band.
+
+severity_penalties:
+  low: 5
+  medium: 10
+  high: 20
+  critical: 35
+
+# Weights of each sub-score in the composite (need not sum to 1 — normalized).
+weights:
+  review_flow: 0.30   # PR-flow detector (Module B)
+  delivery: 0.30      # delivery / drift detector (Module D)
+  ci_test: 0.20       # CI / test-health detector (Module C)
+  knowledge: 0.20     # knowledge risk / bus factor (Module E)
+
+# Status band lower bounds; below `at_risk` is Critical.
+bands:
+  healthy: 90
+  watch: 75
+  at_risk: 60
+
+# Severities for CI signals that don't carry one intrinsically.
+flaky_severity: medium
+duration_regression_severity: high
