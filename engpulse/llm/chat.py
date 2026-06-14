@@ -76,10 +76,13 @@ class FakeChatClient:
         claims = [
             {"text": f"Supported by {r}.", "evidence_refs": [r]} for r in top
         ]
+        # Includes both insight fields and an `answer` field so the same fake
+        # validates against GeneratedInsight and GeneratedAnswer schemas.
         payload = {
             "summary": "Synthesized from the supplied evidence.",
             "likely_cause": "Concentration of activity indicated by the evidence.",
             "recommended_action": "Review with the responsible owner and de-risk.",
+            "answer": "Based on the cited evidence: " + "; ".join(top) + ".",
             "claims": claims,
             "confidence": 0.8,
         }

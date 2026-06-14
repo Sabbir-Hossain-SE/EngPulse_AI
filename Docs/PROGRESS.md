@@ -3,7 +3,8 @@
 Running build log. One module at a time; each is verified before the next starts.
 
 ## Legend
-- ✅ done & verified  ·  🔨 in progress  ·  ⬜ not started
+
+- ✅ done & verified · 🔨 in progress · ⬜ not started
 
 ---
 
@@ -16,6 +17,7 @@ that reads one repo end-to-end** (repo metadata + PRs → normalized rows). The 
 path is replayable from a recorded fixture so it verifies fully offline.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 11 passed
 engpulse sync-repo --repo engpulse-demo/demo-repo --source fixture --dry-run   # offline, no services
@@ -45,6 +47,7 @@ incremental high-water-mark cursors and a per-resource audit log; reusable
 idempotent upserts. New CLI: `ingest-github`.
 
 **Verify:**
+
 ```bash
 pytest                                                                       # 19 passed
 engpulse ingest-github --repo engpulse-demo/demo-repo --source fixture --dry-run   # offline
@@ -67,6 +70,7 @@ that history. Linear assignees become `Person` rows keyed by tracker id + email
 schema; added cursor + audit for the `issues` resource. New CLI: `ingest-linear`.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 26 passed
 engpulse ingest-linear --source fixture --team ENG --dry-run             # offline
@@ -92,6 +96,7 @@ explicit resolution step (idempotent). New CLI: `engpulse resolve`; PRs gained
 author email so GitHub people are mergeable.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 33 passed
 docker compose up -d postgres && engpulse init-db && \
@@ -116,6 +121,7 @@ Ingest commands gained `--fixtures-dir` so the corpus runs through the real
 pipeline. This is the eval-harness seed (PRD §13).
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 37 passed
 engpulse corpus-check                                                    # ✓ consistent
@@ -147,6 +153,7 @@ review-bottleneck) → typed `PRFlowReport` with evidence. Reproducible via an
 injectable `as_of`. New CLI: `engpulse pr-flow`.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 41 passed
 engpulse init-db && \
@@ -160,12 +167,13 @@ stale-PR detection scores **precision 1.0 / recall 1.0** against the corpus.
 ### Sub-step 3.2 — CI/Test-Health Detector (Module C) ✅
 
 **What we built:** Flaky-test detection (a test that fails then passes on the
-*same commit SHA*, ranked by flip rate), failure clustering (by failing-test
+_same commit SHA_, ranked by flip rate), failure clustering (by failing-test
 signature), and per-workflow duration trends with regression flags → typed
 `CIHealthReport`, each finding grounded in CI run ids. Ingestion now persists
 `failed_tests` (CIRunDTO → CIRun). New CLI: `engpulse ci-health`.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 45 passed
 engpulse init-db && \
@@ -186,6 +194,7 @@ issue-key + transition evidence. Ingestion now captures the Linear `createdAt`
 (`source_created_at`) for cycle time. New CLI: `engpulse delivery`.
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 50 passed
 engpulse init-db && \
@@ -195,8 +204,9 @@ engpulse init-db && \
 ```
 
 **Verified output:** PAY-12 flagged deadline_drift (3 moves, 2026-05-15→2026-06-30)
-+ stale + re-estimation; PAY-20 flagged done_without_merged_pr (linked PR open).
-Drift detection scores **precision 1.0 / recall 1.0** vs the corpus.
+
+- stale + re-estimation; PAY-20 flagged done_without_merged_pr (linked PR open).
+  Drift detection scores **precision 1.0 / recall 1.0** vs the corpus.
 
 ### Sub-step 3.4 — Consolidated eval harness ✅
 
@@ -207,6 +217,7 @@ precision/recall scorer. New CLI: `engpulse evaluate [--out report.json]`.
 README now carries the headline metrics.
 
 **Verify:**
+
 ```bash
 pytest              # 53 passed
 engpulse evaluate   # no services needed
@@ -223,11 +234,12 @@ identity_merge — all **precision 1.0 / recall 1.0**; macro 1.00/1.00.
 
 **What we built:** Ownership map from commit→file history (`files` now ingested
 on commits; `Commit.author` relationship added) and a single-point-of-failure
-detector — a module owned by ≤N contributors *with real churn* → typed
+detector — a module owned by ≤N contributors _with real churn_ → typed
 `KnowledgeRiskReport` with owner/commit evidence. New CLI: `engpulse knowledge`.
 Bus-factor added to the eval harness (now **6 labeled tasks**).
 
 **Verify:**
+
 ```bash
 pytest                                                                   # 55 passed
 engpulse evaluate                                                        # 6 tasks, macro 1.00/1.00
@@ -237,7 +249,7 @@ engpulse init-db && \
 ```
 
 **Verified output:** `auth/tokens.py` flagged SPOF (dave, 3 commits); the other
-single-owner files (1 commit each) correctly *not* flagged. bus_factor eval
+single-owner files (1 commit each) correctly _not_ flagged. bus_factor eval
 **precision 1.0 / recall 1.0**.
 
 Decisions: **live Ollama** (real `OllamaEmbeddingClient` + deterministic
@@ -254,6 +266,7 @@ pluggable `LexicalReranker`. Every chunk keeps its source ref for citation. New
 CLI: `rag-demo` (offline) · `rag-index` / `rag-search` (live Ollama + pgvector).
 
 **Verify (offline, no services):**
+
 ```bash
 pytest                                                                   # 62 passed
 engpulse rag-demo --query "who owns the auth tokens module"   # → auth/tokens.py top
@@ -261,6 +274,7 @@ engpulse rag-demo --query "PAY-20 checkout"                   # → issue PAY-20
 ```
 
 **Verify live (your Ollama + Postgres):**
+
 ```bash
 engpulse init-db && engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic
 engpulse rag-index  --repo acme/payments                      # embeds via Ollama into pgvector
@@ -273,7 +287,7 @@ deterministic.
 
 ### Sub-step 4.3 — Grounded synthesis (Module I) ✅
 
-**What we built:** The Ollama *chat* client (`engpulse.llm.chat`: live +
+**What we built:** The Ollama _chat_ client (`engpulse.llm.chat`: live +
 `Scripted`/`Fake` for tests) and the grounded-synthesis pipeline
 (`engpulse.synth`): a strict grounding contract, **schema enforcement with
 retry/repair** (`generate_structured`), a **hallucination check** that drops any
@@ -282,10 +296,12 @@ ungrounded evidence. Severity + numbers stay deterministic; the model only write
 cited prose. New CLI: `engpulse synthesize` (`--source fake|ollama`).
 
 **Verify (offline):**
+
 ```bash
 pytest               # 69 passed
 engpulse synthesize  # SPOF on auth/tokens.py → grounded insight, severity from the flag
 ```
+
 Live chat: `engpulse synthesize --source ollama` (uses your chat model for the prose).
 
 **Verified output:** `single_point_of_failure on auth/tokens.py`, severity
@@ -294,14 +310,33 @@ Live chat: `engpulse synthesize --source ollama` (uses your chat model for the p
 
 ---
 
-## What's next
+## Module 5 — Ask EngPulse agent 🔨 (in progress)
 
-⬜ **Module 5 — Ask EngPulse agent** (PRD §8.J, Milestone 5): a natural-language
-agent that plans which tools to call (deterministic metrics, the hybrid
-retriever, the ownership graph), reasons over combined evidence across multiple
-hops, and returns a cited, confidence-scored answer — or asks a clarifying
-question / abstains. Builds directly on Module 4's retrieval + grounded synthesis.
+### Sub-step 5.1 — Agent core ✅
 
-> Per working agreement: checkpoint each sub-step before starting the next.
+**What we built:** A tool registry (`retrieval`, `ownership`, `delivery`,
+`ci_health`, `pr_flow`) each returning citable evidence; a pluggable planner
+(`RuleBasedPlanner` default + `LLMPlanner`); and the `AskAgent` loop —
+plan → call tools (multi-hop) → assemble deduped evidence → grounded cited
+answer (reuses 4.3's schema enforcement + grounding), with **abstention** (no
+evidence / all claims ungrounded) and a **clarifying question** for vague input.
+`generate_structured` is now schema-generic. New CLI: `engpulse ask`.
+
+**Verify (offline):**
+```bash
+pytest                                                  # 76 passed
+engpulse ask "who owns the auth tokens module and what is at risk"
+engpulse ask "what is the meaning of life"              # → abstains
+engpulse ask "what about it?"                           # → clarifying question
+```
+Live: `engpulse ask "..." --source ollama --planner llm`.
+
+**Verified output:** ownership question → multi-hop plan, cited answer
+(`metric:auth/tokens.py`, …); unanswerable → abstains; vague → clarifies.
+
+### Remaining sub-step
+- ⬜ **5.2 — Agent eval (PRD §13)**: fixed question set with expected sources +
+  unanswerable questions → score answer-citation faithfulness + correct-abstention
+  rate; add to the harness. Closes out Module 5.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

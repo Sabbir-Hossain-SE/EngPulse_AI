@@ -64,16 +64,19 @@ def _extract_json(raw: str) -> dict:
 
 
 def generate_structured(
-    chat: ChatClient, messages: list[dict], max_retries: int = 2
-) -> GeneratedInsight:
-    """Call the model and enforce the schema, repairing on failure."""
+    chat: ChatClient,
+    messages: list[dict],
+    schema: type = GeneratedInsight,
+    max_retries: int = 2,
+):
+    """Call the model and enforce ``schema``, repairing on failure."""
 
     convo = list(messages)
     last_error: Exception | None = None
     for attempt in range(max_retries + 1):
         raw = chat.complete(convo)
         try:
-            return GeneratedInsight.model_validate(_extract_json(raw))
+            return schema.model_validate(_extract_json(raw))
         except (ValidationError, ValueError, json.JSONDecodeError) as exc:
             last_error = exc
             log.warning("Schema violation (attempt %d): %s", attempt + 1, exc)
