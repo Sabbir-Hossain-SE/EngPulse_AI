@@ -1,0 +1,58 @@
+[
+  {
+    "id": "lin-issue-101",
+    "identifier": "ENG-101",
+    "title": "Add retry/backoff to the GitHub client",
+    "createdAt": "2026-05-18T09:00:00Z",
+    "updatedAt": "2026-06-08T10:00:00Z",
+    "estimate": 3,
+    "dueDate": "2026-06-20",
+    "state": { "name": "In Progress", "type": "started" },
+    "assignee": { "id": "lin-alice", "name": "Alice", "displayName": "alice", "email": "alice@example.com" },
+    "team": { "key": "ENG", "name": "Engineering" },
+    "project": { "name": "Reliability" },
+    "labels": { "nodes": [{ "name": "backend" }] },
+    "history": {
+      "nodes": [
+        { "createdAt": "2026-05-20T10:00:00Z", "fromState": { "name": "Backlog" }, "toState": { "name": "Todo" } },
+        { "createdAt": "2026-05-25T10:00:00Z", "fromEstimate": 2, "toEstimate": 3 },
+        { "createdAt": "2026-06-01T10:00:00Z", "fromDueDate": "2026-06-05", "toDueDate": "2026-06-12" },
+        { "createdAt": "2026-06-08T10:00:00Z", "fromDueDate": "2026-06-12", "toDueDate": "2026-06-20" }
+      ]
+    }
+  },
+  {
+    "id": "lin-issue-102",
+    "identifier": "ENG-102",
+    "title": "Normalize PR DTOs into the unified schema",
+    "createdAt": "2026-05-26T09:00:00Z",
+    "updatedAt": "2026-05-29T17:00:00Z",
+    "estimate": 2,
+    "dueDate": null,
+    "state": { "name": "Done", "type": "completed" },
+    "assignee": { "id": "lin-bob", "name": "Bob", "displayName": "bob", "email": "bob@example.com" },
+    "team": { "key": "ENG", "name": "Engineering" },
+    "project": { "name": "Reliability" },
+    "labels": { "nodes": [] },
+    "history": {
+      "nodes": [
+        { "createdAt": "2026-05-29T16:50:00Z", "fromState": { "name": "In Progress" }, "toState": { "name": "Done" } }
+      ]
+    }
+  },
+  {
+    "id": "lin-issue-103",
+    "identifier": "ENG-103",
+    "title": "Wire pgvector extension at init time",
+    "createdAt": "2026-06-04T09:00:00Z",
+    "updatedAt": "2026-06-05T08:00:00Z",
+    "estimate": null,
+    "dueDate": null,
+    "state": { "name": "Backlog", "type": "backlog" },
+    "assignee": { "id": "lin-alice", "name": "Alice", "displayName": "alice", "email": "alice@example.com" },
+    "team": { "key": "ENG", "name": "Engineering" },
+    "project": { "name": "Reliability" },
+    "labels": { "nodes": [] },
+    "history": { "nodes": [] }
+  }
+]

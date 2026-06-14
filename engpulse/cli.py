@@ -140,16 +140,58 @@ def ingest_github_cmd(
     console.print(table)
 
     if report.audits:
-        audit_table = Table(title="Sync audit (per resource)")
-        audit_table.add_column("Resource", style="cyan")
-        audit_table.add_column("Seen", justify="right")
-        audit_table.add_column("Written", justify="right")
-        audit_table.add_column("Status", style="green")
-        for row in report.audits:
-            audit_table.add_row(
-                row["resource"], str(row["seen"]), str(row["written"]), row["status"]
-            )
-        console.print(audit_table)
+        _print_audit(report.audits)
+
+
+@app.command("ingest-linear")
+def ingest_linear_cmd(
+    source: str = typer.Option(
+        "fixture", "--source", help="'fixture' (offline) or 'live' (Linear API)"
+    ),
+    team_key: str = typer.Option(
+        None, "--team", help="scope to a Linear team key (defaults to LINEAR_TEAM_KEY)"
+    ),
+    limit: int = typer.Option(200, "--limit", help="max issues to read"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="fetch + count but do not write to the DB"
+    ),
+) -> None:
+    """Incremental Linear ingestion: issues, status, estimates, transitions."""
+
+    from engpulse.ingest import ingest_linear
+
+    team = team_key if team_key is not None else (get_settings().linear_team_key or None)
+    console.print(
+        f"Ingesting Linear (team={team or 'all'}) via [bold]{source}[/bold] "
+        f"(dry_run={dry_run})…"
+    )
+    report = ingest_linear(source=source, team_key=team, limit=limit, dry_run=dry_run)
+
+    table = Table(title=f"Linear ingest report — {report.scope}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="white", justify="right")
+    table.add_row("Issues", str(report.issues))
+    table.add_row("Distinct assignees", str(report.assignees))
+    table.add_row("With deadline drift", str(report.with_due_drift))
+    table.add_row("With re-estimation", str(report.with_reestimation))
+    table.add_row("Persisted to DB", "yes" if report.persisted else "no (dry-run)")
+    console.print(table)
+
+    if report.audits:
+        _print_audit(report.audits)
+
+
+def _print_audit(audits: list[dict]) -> None:
+    audit_table = Table(title="Sync audit (per resource)")
+    audit_table.add_column("Resource", style="cyan")
+    audit_table.add_column("Seen", justify="right")
+    audit_table.add_column("Written", justify="right")
+    audit_table.add_column("Status", style="green")
+    for row in audits:
+        audit_table.add_row(
+            row["resource"], str(row["seen"]), str(row["written"]), row["status"]
+        )
+    console.print(audit_table)
 
 
 if __name__ == "__main__":
