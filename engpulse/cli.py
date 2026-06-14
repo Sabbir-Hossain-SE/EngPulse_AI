@@ -496,6 +496,63 @@ def rag_search_cmd(
         _print_retrieval(query, retriever.retrieve(query, k=k))
 
 
+@app.command("synthesize")
+def synthesize_cmd(
+    source: str = typer.Option(
+        "fake", "--source", help="chat backend: 'fake' (offline) or 'ollama'"
+    ),
+) -> None:
+    """Grounded synthesis demo: turn the top knowledge-risk flag into a cited insight.
+
+    Retrieval runs offline over the synthetic corpus; --source ollama uses your
+    live chat model to write the (still evidence-grounded) prose.
+    """
+
+    from engpulse.eval.harness import ephemeral_corpus_session
+    from engpulse.llm import build_chat_client, build_embedding_client
+    from engpulse.metrics import compute_knowledge_risk
+    from engpulse.rag import HybridRetriever, InMemoryVectorStore, build_index
+    from engpulse.synth import synthesize_for_flag
+
+    repo = "acme/payments"
+    session = ephemeral_corpus_session()
+    embedder = build_embedding_client("fake")
+    store = InMemoryVectorStore()
+    build_index(session, repo, embedder, store)
+    retriever = HybridRetriever(store, embedder)
+
+    report = compute_knowledge_risk(session, repo)
+    if not report.flags:
+        console.print("[yellow]No knowledge-risk flags to synthesize.[/yellow]")
+        return
+    flag = report.flags[0]
+    metric_text = (
+        f"{flag.module} is owned by {flag.evidence['owner']} with "
+        f"{flag.evidence['commit_count']} commits; "
+        f"contributors: {flag.evidence['contributors']}."
+    )
+    chat = build_chat_client(source)
+    insight = synthesize_for_flag(
+        flag.type, flag.module, flag.severity, metric_text, retriever, chat,
+        query=f"{flag.module} ownership and risk",
+    )
+
+    table = Table(title=f"Insight — {insight.condition_type} on {insight.subject}")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value")
+    table.add_row("Severity", insight.severity)
+    table.add_row("Abstained", "yes" if insight.abstained else "no")
+    if insight.abstained:
+        table.add_row("Reason", insight.abstention_reason or "")
+    else:
+        table.add_row("Summary", insight.summary or "")
+        table.add_row("Likely cause", insight.likely_cause or "")
+        table.add_row("Recommended action", insight.recommended_action or "")
+        table.add_row("Confidence", f"{insight.confidence:.2f}")
+        table.add_row("Citations", ", ".join(insight.citations) or "—")
+    console.print(table)
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     out: str = typer.Option(None, "--out", help="write the report as JSON to this path"),

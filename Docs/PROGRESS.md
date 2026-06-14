@@ -217,7 +217,7 @@ identity_merge — all **precision 1.0 / recall 1.0**; macro 1.00/1.00.
 
 ---
 
-## Module 4 — Knowledge-Silo RAG + Grounded Synthesis 🔨 (in progress)
+## Module 4 — Knowledge-Silo RAG + Grounded Synthesis ✅ (complete)
 
 ### Sub-step 4.1 — Ownership graph + bus-factor (Module E, deterministic) ✅
 
@@ -271,10 +271,37 @@ engpulse rag-search --repo acme/payments --query "who owns auth tokens"
 ownership doc #1; exact key `PAY-20` retrieved via keyword; retrieval
 deterministic.
 
-### Remaining sub-step
-- ⬜ **4.3 — Grounded synthesis (Module I)**: flagged condition + retrieved
-  evidence → schema-enforced insight (Pydantic, retry/repair), hallucination
-  check (every claim maps to a source), abstention. Brings in the Ollama *chat*
-  client; closes out Module 4.
+### Sub-step 4.3 — Grounded synthesis (Module I) ✅
+
+**What we built:** The Ollama *chat* client (`engpulse.llm.chat`: live +
+`Scripted`/`Fake` for tests) and the grounded-synthesis pipeline
+(`engpulse.synth`): a strict grounding contract, **schema enforcement with
+retry/repair** (`generate_structured`), a **hallucination check** that drops any
+claim whose cited refs aren't in the evidence, and **abstention** on thin/
+ungrounded evidence. Severity + numbers stay deterministic; the model only writes
+cited prose. New CLI: `engpulse synthesize` (`--source fake|ollama`).
+
+**Verify (offline):**
+```bash
+pytest               # 69 passed
+engpulse synthesize  # SPOF on auth/tokens.py → grounded insight, severity from the flag
+```
+Live chat: `engpulse synthesize --source ollama` (uses your chat model for the prose).
+
+**Verified output:** `single_point_of_failure on auth/tokens.py`, severity
+**high** (from the flag), not abstained, confidence 0.80, citations
+`auth1sh, metric:auth/tokens.py` — no hallucinated claims.
+
+---
+
+## What's next
+
+⬜ **Module 5 — Ask EngPulse agent** (PRD §8.J, Milestone 5): a natural-language
+agent that plans which tools to call (deterministic metrics, the hybrid
+retriever, the ownership graph), reasons over combined evidence across multiple
+hops, and returns a cited, confidence-scored answer — or asks a clarifying
+question / abstains. Builds directly on Module 4's retrieval + grounded synthesis.
+
+> Per working agreement: checkpoint each sub-step before starting the next.
 
 > Per working agreement: checkpoint each sub-step before starting the next.
