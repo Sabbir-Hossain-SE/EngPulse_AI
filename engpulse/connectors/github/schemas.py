@@ -41,9 +41,11 @@ class PullRequestDTO(BaseModel):
     title: str | None = None
     state: str | None = None
     html_url: str | None = None
+    head_sha: str | None = None
     author_login: str | None = None
     author_id: int | None = None
     created_at: datetime | None = None
+    updated_at: datetime | None = None
     merged_at: datetime | None = None
     closed_at: datetime | None = None
     additions: int | None = None
@@ -54,19 +56,88 @@ class PullRequestDTO(BaseModel):
     @classmethod
     def from_api(cls, data: dict) -> "PullRequestDTO":
         user = data.get("user") or {}
+        head = data.get("head") or {}
         return cls(
             id=data["id"],
             number=data["number"],
             title=data.get("title"),
             state=data.get("state"),
             html_url=data.get("html_url"),
+            head_sha=head.get("sha"),
             author_login=user.get("login"),
             author_id=user.get("id"),
             created_at=data.get("created_at"),
+            updated_at=data.get("updated_at"),
             merged_at=data.get("merged_at"),
             closed_at=data.get("closed_at"),
             additions=data.get("additions"),
             deletions=data.get("deletions"),
             changed_files=data.get("changed_files"),
             requested_reviewers=data.get("requested_reviewers") or [],
+        )
+
+
+class ReviewDTO(BaseModel):
+    id: int
+    pr_number: int | None = None
+    reviewer_login: str | None = None
+    reviewer_id: int | None = None
+    state: str | None = None  # APPROVED / CHANGES_REQUESTED / COMMENTED
+    submitted_at: datetime | None = None
+
+    @classmethod
+    def from_api(cls, data: dict, pr_number: int | None = None) -> "ReviewDTO":
+        user = data.get("user") or {}
+        return cls(
+            id=data["id"],
+            pr_number=pr_number,
+            reviewer_login=user.get("login"),
+            reviewer_id=user.get("id"),
+            state=data.get("state"),
+            submitted_at=data.get("submitted_at"),
+        )
+
+
+class CommitDTO(BaseModel):
+    sha: str
+    message: str | None = None
+    author_login: str | None = None
+    author_id: int | None = None
+    committed_at: datetime | None = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "CommitDTO":
+        author = data.get("author") or {}  # the GitHub user (may be null)
+        commit = data.get("commit") or {}
+        commit_author = commit.get("author") or {}
+        return cls(
+            sha=data["sha"],
+            message=commit.get("message"),
+            author_login=author.get("login"),
+            author_id=author.get("id"),
+            committed_at=commit_author.get("date"),
+        )
+
+
+class CIRunDTO(BaseModel):
+    id: int
+    workflow: str | None = None
+    head_sha: str | None = None
+    status: str | None = None
+    conclusion: str | None = None
+    run_attempt: int | None = None
+    run_started_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @classmethod
+    def from_api(cls, data: dict) -> "CIRunDTO":
+        return cls(
+            id=data["id"],
+            workflow=data.get("name"),
+            head_sha=data.get("head_sha"),
+            status=data.get("status"),
+            conclusion=data.get("conclusion"),
+            run_attempt=data.get("run_attempt"),
+            run_started_at=data.get("run_started_at"),
+            updated_at=data.get("updated_at"),
         )

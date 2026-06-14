@@ -27,7 +27,13 @@ from tenacity import (
 )
 
 from engpulse.config import get_settings
-from engpulse.connectors.github.schemas import PullRequestDTO, RepositoryDTO
+from engpulse.connectors.github.schemas import (
+    CIRunDTO,
+    CommitDTO,
+    PullRequestDTO,
+    RepositoryDTO,
+    ReviewDTO,
+)
 from engpulse.logging import get_logger
 
 log = get_logger(__name__)
@@ -41,6 +47,18 @@ class GitHubClient(Protocol):
     async def list_pull_requests(
         self, owner: str, repo: str, limit: int = 20
     ) -> list[PullRequestDTO]: ...
+
+    async def list_reviews(
+        self, owner: str, repo: str, pr_number: int
+    ) -> list[ReviewDTO]: ...
+
+    async def list_commits(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CommitDTO]: ...
+
+    async def list_workflow_runs(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CIRunDTO]: ...
 
 
 class RetryableStatus(Exception):
@@ -134,6 +152,31 @@ class RestGitHubClient:
 
             return list(await asyncio.gather(*(detail(pr) for pr in collected)))
 
+    async def list_reviews(
+        self, owner: str, repo: str, pr_number: int
+    ) -> list[ReviewDTO]:
+        url = f"{self._api_url}/repos/{owner}/{repo}/pulls/{pr_number}/reviews"
+        async with httpx.AsyncClient(headers=self._headers(), timeout=30) as client:
+            resp = await self._get(client, url, per_page=100)
+            return [ReviewDTO.from_api(row, pr_number=pr_number) for row in resp.json()]
+
+    async def list_commits(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CommitDTO]:
+        url = f"{self._api_url}/repos/{owner}/{repo}/commits"
+        async with httpx.AsyncClient(headers=self._headers(), timeout=30) as client:
+            resp = await self._get(client, url, per_page=min(self._per_page, limit))
+            return [CommitDTO.from_api(row) for row in resp.json()[:limit]]
+
+    async def list_workflow_runs(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CIRunDTO]:
+        url = f"{self._api_url}/repos/{owner}/{repo}/actions/runs"
+        async with httpx.AsyncClient(headers=self._headers(), timeout=30) as client:
+            resp = await self._get(client, url, per_page=min(self._per_page, limit))
+            runs = resp.json().get("workflow_runs", [])
+            return [CIRunDTO.from_api(row) for row in runs[:limit]]
+
 
 class FixtureGitHubClient:
     """Serves recorded JSON, so the read path runs with zero live calls.
@@ -159,6 +202,26 @@ class FixtureGitHubClient:
     ) -> list[PullRequestDTO]:
         rows = self._load("github_prs.json")[:limit]
         return [PullRequestDTO.from_api(row) for row in rows]
+
+    async def list_reviews(
+        self, owner: str, repo: str, pr_number: int
+    ) -> list[ReviewDTO]:
+        # github_reviews.json maps PR number (as string) -> list of review objects.
+        by_pr = self._load("github_reviews.json")
+        rows = by_pr.get(str(pr_number), [])
+        return [ReviewDTO.from_api(row, pr_number=pr_number) for row in rows]
+
+    async def list_commits(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CommitDTO]:
+        rows = self._load("github_commits.json")[:limit]
+        return [CommitDTO.from_api(row) for row in rows]
+
+    async def list_workflow_runs(
+        self, owner: str, repo: str, limit: int = 50
+    ) -> list[CIRunDTO]:
+        rows = self._load("github_runs.json")[:limit]
+        return [CIRunDTO.from_api(row) for row in rows]
 
 
 def build_client(source: str, fixtures_dir: str | Path | None = None) -> GitHubClient:

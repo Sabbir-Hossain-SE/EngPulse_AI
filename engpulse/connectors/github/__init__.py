@@ -6,7 +6,13 @@ from engpulse.connectors.github.client import (
     RestGitHubClient,
     build_client,
 )
-from engpulse.connectors.github.schemas import PullRequestDTO, RepositoryDTO
+from engpulse.connectors.github.schemas import (
+    CIRunDTO,
+    CommitDTO,
+    PullRequestDTO,
+    RepositoryDTO,
+    ReviewDTO,
+)
 
 __all__ = [
     "GitHubClient",
@@ -15,4 +21,7 @@ __all__ = [
     "build_client",
     "RepositoryDTO",
     "PullRequestDTO",
+    "ReviewDTO",
+    "CommitDTO",
+    "CIRunDTO",
 ]

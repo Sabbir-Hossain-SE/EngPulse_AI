@@ -31,12 +31,37 @@ docker compose up -d postgres && engpulse init-db && \
 
 ---
 
-## What's next
+## Module 2 — Ingestion & Normalization 🔨 (in progress)
 
-⬜ **Module 2 — Ingestion & Normalization** (PRD §8.A): GitHub + CI + Linear
-connectors, incremental sync with per-source cursors + webhooks, entity resolution
-(PR↔issue↔person↔CI), audit log, and the labeled test fixtures. Extends the
-connector and schema laid down here.
+Decisions: **live Linear** (connector supports live + offline fixtures) · sync =
+**incremental cursors now, webhooks stubbed**.
 
-> Per working agreement: do not start Module 2 until Module 1 output is confirmed
-> and the next module is explicitly approved.
+### Sub-step 2.1 — GitHub + CI ingestion ✅
+
+**What we built:** Extended the GitHub connector to commits, review events, and
+GitHub Actions runs; added `head_sha` to PRs and a `pull_request_id` link on CI
+runs (resolved by head SHA); added `SyncCursor` + `SyncAudit` tables with
+incremental high-water-mark cursors and a per-resource audit log; reusable
+idempotent upserts. New CLI: `ingest-github`.
+
+**Verify:**
+```bash
+pytest                                                                       # 19 passed
+engpulse ingest-github --repo engpulse-demo/demo-repo --source fixture --dry-run   # offline
+docker compose up -d postgres && engpulse init-db && \
+  engpulse ingest-github --repo engpulse-demo/demo-repo --source fixture     # full DB spine
+```
+
+**Verified output:** 12 tables; ingest persists 3 PRs / 4 commits / 4 CI runs
+(3 linked to PRs) / 3 people / 2 bug-fix commits; cursors advance per resource;
+audit rows all `ok`; re-run is idempotent.
+
+### Remaining sub-steps
+- ⬜ **2.2 — Linear connector** (live + fixtures): issues, status, estimates,
+  transitions, assignees → `Issue`, incremental by `updatedAt`.
+- ⬜ **2.3 — Entity resolution**: PR↔Issue (branch/key/body) + cross-system
+  identity merge, with a measurable resolution report.
+- ⬜ **2.4 — Labeled fixtures**: synthetic corpus with injected problems + labels
+  (eval seed).
+
+> Per working agreement: checkpoint each sub-step before starting the next.

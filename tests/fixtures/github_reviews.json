@@ -1,0 +1,25 @@
+{
+  "101": [
+    {
+      "id": 880000001,
+      "user": { "login": "bob", "id": 1002 },
+      "state": "CHANGES_REQUESTED",
+      "submitted_at": "2026-06-01T15:00:00Z"
+    },
+    {
+      "id": 880000002,
+      "user": { "login": "carol", "id": 1003 },
+      "state": "APPROVED",
+      "submitted_at": "2026-06-02T09:30:00Z"
+    }
+  ],
+  "102": [
+    {
+      "id": 880000003,
+      "user": { "login": "alice", "id": 1001 },
+      "state": "APPROVED",
+      "submitted_at": "2026-05-29T12:00:00Z"
+    }
+  ],
+  "103": []
+}

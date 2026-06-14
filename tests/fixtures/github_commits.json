@@ -1,0 +1,34 @@
+[
+  {
+    "sha": "aaa101sha",
+    "author": { "login": "alice", "id": 1001 },
+    "commit": {
+      "message": "Add retry/backoff to the GitHub client",
+      "author": { "name": "Alice", "email": "alice@example.com", "date": "2026-06-01T08:55:00Z" }
+    }
+  },
+  {
+    "sha": "bbb102sha",
+    "author": { "login": "bob", "id": 1002 },
+    "commit": {
+      "message": "Fix flaky normalization on null reviewers",
+      "author": { "name": "Bob", "email": "bob@example.com", "date": "2026-05-29T16:40:00Z" }
+    }
+  },
+  {
+    "sha": "ddd200sha",
+    "author": { "login": "alice", "id": 1001 },
+    "commit": {
+      "message": "Hotfix: guard against missing head sha",
+      "author": { "name": "Alice", "email": "alice@example.com", "date": "2026-06-06T11:00:00Z" }
+    }
+  },
+  {
+    "sha": "eee300sha",
+    "author": null,
+    "commit": {
+      "message": "Bump dependencies",
+      "author": { "name": "dependabot", "email": "bot@github.com", "date": "2026-06-07T01:00:00Z" }
+    }
+  }
+]

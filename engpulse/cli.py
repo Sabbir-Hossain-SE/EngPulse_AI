@@ -95,5 +95,62 @@ def sync_repo(
     console.print(table)
 
 
+@app.command("ingest-github")
+def ingest_github_cmd(
+    repo: str = typer.Option(
+        None, "--repo", help="owner/name (defaults to GITHUB_REPO from config)"
+    ),
+    source: str = typer.Option(
+        "fixture", "--source", help="'fixture' (offline) or 'live' (GitHub API)"
+    ),
+    pr_limit: int = typer.Option(50, "--pr-limit", help="max pull requests to read"),
+    commit_limit: int = typer.Option(100, "--commit-limit", help="max commits to read"),
+    run_limit: int = typer.Option(100, "--run-limit", help="max CI runs to read"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="fetch + count but do not write to the DB"
+    ),
+) -> None:
+    """Incremental GitHub ingestion: PRs+reviews, commits, and CI runs."""
+
+    from engpulse.ingest import ingest_github
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+
+    console.print(
+        f"Ingesting [bold]{target}[/bold] via [bold]{source}[/bold] "
+        f"(dry_run={dry_run})…"
+    )
+    report = ingest_github(
+        target, source=source, pr_limit=pr_limit,
+        commit_limit=commit_limit, run_limit=run_limit, dry_run=dry_run,
+    )
+
+    table = Table(title=f"Ingest report — {report.repo_full_name}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="white", justify="right")
+    table.add_row("Pull requests", str(report.pull_requests))
+    table.add_row("Reviews", str(report.reviews))
+    table.add_row("Commits", str(report.commits))
+    table.add_row("CI runs", str(report.ci_runs))
+    table.add_row("CI runs linked to a PR", str(report.ci_runs_linked))
+    table.add_row("Persisted to DB", "yes" if report.persisted else "no (dry-run)")
+    console.print(table)
+
+    if report.audits:
+        audit_table = Table(title="Sync audit (per resource)")
+        audit_table.add_column("Resource", style="cyan")
+        audit_table.add_column("Seen", justify="right")
+        audit_table.add_column("Written", justify="right")
+        audit_table.add_column("Status", style="green")
+        for row in report.audits:
+            audit_table.add_row(
+                row["resource"], str(row["seen"]), str(row["written"]), row["status"]
+            )
+        console.print(audit_table)
+
+
 if __name__ == "__main__":
     app()

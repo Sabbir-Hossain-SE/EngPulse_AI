@@ -101,6 +101,8 @@ class PullRequest(TimestampMixin, Base):
     title: Mapped[str | None] = mapped_column(Text)
     state: Mapped[str | None] = mapped_column(String(32))
     html_url: Mapped[str | None] = mapped_column(String(1024))
+    head_sha: Mapped[str | None] = mapped_column(String(64), index=True)
+    source_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     author_id: Mapped[int | None] = mapped_column(ForeignKey("people.id"))
     linked_issue_id: Mapped[int | None] = mapped_column(ForeignKey("issues.id"))
@@ -163,13 +165,19 @@ class CIRun(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     github_id: Mapped[int | None] = mapped_column(Integer, unique=True, index=True)
     repo_id: Mapped[int] = mapped_column(ForeignKey("repositories.id"), index=True)
+    pull_request_id: Mapped[int | None] = mapped_column(ForeignKey("pull_requests.id"))
     commit_sha: Mapped[str | None] = mapped_column(String(64), index=True)
     workflow: Mapped[str | None] = mapped_column(String(256))
+    status: Mapped[str | None] = mapped_column(String(64))
     conclusion: Mapped[str | None] = mapped_column(String(64))
+    run_attempt: Mapped[int | None] = mapped_column(Integer)
     duration_seconds: Mapped[float | None] = mapped_column(Float)
     failed_tests: Mapped[list | None] = mapped_column(JSON)
     log_ref: Mapped[str | None] = mapped_column(String(1024))
     run_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    source_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    pull_request: Mapped["PullRequest | None"] = relationship(foreign_keys=[pull_request_id])
 
 
 class Message(TimestampMixin, Base):
@@ -210,3 +218,42 @@ class Score(TimestampMixin, Base):
     sub_scores: Mapped[dict | None] = mapped_column(JSON)
     band: Mapped[str | None] = mapped_column(String(32))
     delta: Mapped[float | None] = mapped_column(Float)
+
+
+class SyncCursor(TimestampMixin, Base):
+    """Per-source incremental cursor: how far a (source, resource, scope) is synced.
+
+    ``scope`` is the unit being synced (e.g. a repo full name). ``updated_since``
+    is the high-water mark advanced after each successful run so the next run only
+    fetches records changed after it.
+    """
+
+    __tablename__ = "sync_cursors"
+    __table_args__ = (
+        UniqueConstraint("source", "resource", "scope", name="uq_cursor_src_res_scope"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(64))
+    resource: Mapped[str] = mapped_column(String(64))
+    scope: Mapped[str] = mapped_column(String(512))
+    updated_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cursor: Mapped[str | None] = mapped_column(String(512))
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SyncAudit(TimestampMixin, Base):
+    """One row per sync run per resource: what was seen vs written, and status."""
+
+    __tablename__ = "sync_audits"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(64))
+    resource: Mapped[str] = mapped_column(String(64))
+    scope: Mapped[str] = mapped_column(String(512))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    records_seen: Mapped[int] = mapped_column(Integer, default=0)
+    records_written: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str | None] = mapped_column(String(32))
+    error_message: Mapped[str | None] = mapped_column(Text)
