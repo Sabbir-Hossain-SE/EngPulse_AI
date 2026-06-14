@@ -632,12 +632,24 @@ def evaluate_cmd(
     console.print(table)
     console.print(f"[bold]{report.headline()}[/bold]")
 
+    if report.agent:
+        a = report.agent
+        agent_table = Table(title="Ask EngPulse agent")
+        agent_table.add_column("Metric", style="cyan")
+        agent_table.add_column("Value", justify="right")
+        agent_table.add_row("Questions", f"{a['answerable']}/{a['questions']} answerable")
+        agent_table.add_row("Source recall", f"{a['source_recall']:.2f}")
+        agent_table.add_row("Citation faithfulness", f"{a['citation_faithfulness']:.2f}")
+        agent_table.add_row("Correct abstention", f"{a['correct_abstention']:.2f}")
+        console.print(agent_table)
+
     if out:
         payload = {
             "as_of": report.as_of.isoformat(),
             "macro_precision": report.macro_precision,
             "macro_recall": report.macro_recall,
             "scores": report.scores,
+            "agent": report.agent,
         }
         Path(out).write_text(_json.dumps(payload, indent=2))
         console.print(f"[green]✓[/green] wrote {out}")

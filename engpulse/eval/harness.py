@@ -33,12 +33,15 @@ from engpulse.resolve.identity import merge_people
 from engpulse.resolve.pr_issue import link_prs_to_issues
 
 
-__all__ = ["EvaluationReport", "run_evaluation", "ephemeral_corpus_session"]
+__all__ = [
+    "EvaluationReport", "run_evaluation", "ephemeral_corpus_session", "evaluate_agent",
+]
 
 
 class EvaluationReport(BaseModel):
     as_of: datetime
     scores: list[dict] = Field(default_factory=list)
+    agent: dict = Field(default_factory=dict)
 
     @property
     def macro_precision(self) -> float:
@@ -55,6 +58,61 @@ class EvaluationReport(BaseModel):
             f"{len(self.scores)} labeled tasks · macro precision "
             f"{self.macro_precision:.2f} / recall {self.macro_recall:.2f}"
         )
+
+
+def _mean(values: list[float]) -> float:
+    return round(sum(values) / len(values), 4) if values else 1.0
+
+
+def evaluate_agent(session: Session, corpus: Corpus) -> dict:
+    """Score the Ask EngPulse agent: source recall, citation faithfulness, and
+    correct-abstention rate over the labeled question set (offline, fake chat)."""
+
+    from datetime import timezone
+
+    from engpulse.agent import build_agent
+    from engpulse.llm import build_chat_client, build_embedding_client
+    from engpulse.rag import HybridRetriever, InMemoryVectorStore, build_index
+
+    labels = corpus.labels
+    repo = corpus.repo["full_name"]
+    as_of = datetime.combine(labels.as_of, datetime.min.time(), tzinfo=timezone.utc)
+
+    embedder = build_embedding_client("fake")
+    store = InMemoryVectorStore()
+    build_index(session, repo, embedder, store)
+    retriever = HybridRetriever(store, embedder)
+    agent = build_agent(session, repo, build_chat_client("fake"), retriever,
+                        team=labels.team_key, as_of=as_of)
+
+    recalls: list[float] = []
+    faithfulness: list[float] = []
+    abstained_correct = 0
+    unanswerable = [q for q in labels.agent_questions if not q.answerable]
+
+    for q in labels.agent_questions:
+        answer = agent.ask(q.question)
+        evidence_refs = {e.ref for e in answer.evidence}
+        if q.answerable:
+            expected = set(q.expected_sources)
+            recalls.append(
+                len(expected & evidence_refs) / len(expected) if expected else 1.0
+            )
+            if not answer.abstained and answer.citations:
+                faithfulness.append(
+                    1.0 if all(c in evidence_refs for c in answer.citations) else 0.0
+                )
+        elif answer.abstained or answer.clarifying_question:
+            abstained_correct += 1
+
+    return {
+        "questions": len(labels.agent_questions),
+        "answerable": len(labels.agent_questions) - len(unanswerable),
+        "source_recall": _mean(recalls),
+        "citation_faithfulness": _mean(faithfulness),
+        "correct_abstention": round(abstained_correct / len(unanswerable), 4)
+        if unanswerable else 1.0,
+    }
 
 
 def _ephemeral_session() -> Session:
@@ -148,6 +206,9 @@ def run_evaluation(
             {(i.github_login, i.tracker_id) for i in labels.identities},
         ))
 
-        return EvaluationReport(as_of=as_of, scores=[s.as_dict() for s in scores])
+        agent_metrics = evaluate_agent(session, corpus)
+        return EvaluationReport(
+            as_of=as_of, scores=[s.as_dict() for s in scores], agent=agent_metrics
+        )
     finally:
         session.close()

@@ -149,6 +149,9 @@ engpulse evaluate --out eval.json # also writes a JSON report
 | stale_pr · flaky_test · deadline_drift · bus_factor | 1.00 | 1.00 |
 | pr_issue_link · identity_merge | 1.00 | 1.00 |
 
+**Ask EngPulse agent** (labeled question set): source recall **1.00**, citation
+faithfulness **1.00**, correct-abstention on unanswerable questions **1.00**.
+
 > The corpus is a seed (a handful of deliberately injected cases); it grows toward
 > the PRD's 200-case target. The point is the *measurement loop* — every detector
 > is scored against labels, so quality can't silently regress.
