@@ -553,6 +553,59 @@ def synthesize_cmd(
     console.print(table)
 
 
+@app.command("ask")
+def ask_cmd(
+    question: str = typer.Argument(..., help="natural-language question"),
+    source: str = typer.Option("fake", "--source", help="chat backend: 'fake' or 'ollama'"),
+    planner: str = typer.Option("rule", "--planner", help="'rule' or 'llm'"),
+) -> None:
+    """Ask EngPulse a question (offline demo over the synthetic corpus)."""
+
+    from datetime import datetime, timezone
+
+    from engpulse.agent import LLMPlanner, RuleBasedPlanner, build_agent
+    from engpulse.eval.harness import ephemeral_corpus_session
+    from engpulse.llm import build_chat_client, build_embedding_client
+    from engpulse.rag import HybridRetriever, InMemoryVectorStore, build_index
+
+    repo = "acme/payments"
+    session = ephemeral_corpus_session()
+    embedder = build_embedding_client("fake")
+    store = InMemoryVectorStore()
+    build_index(session, repo, embedder, store)
+    retriever = HybridRetriever(store, embedder)
+    chat = build_chat_client(source)
+    planner_obj = LLMPlanner(chat) if planner == "llm" else RuleBasedPlanner()
+    agent = build_agent(
+        session, repo, chat, retriever, team="PAY",
+        as_of=datetime(2026, 6, 14, tzinfo=timezone.utc), planner=planner_obj,
+    )
+    answer = agent.ask(question)
+
+    console.print(f"[bold]Q:[/bold] {answer.question}")
+    if answer.plan:
+        plan_str = ", ".join(f"{t.tool}(+{t.evidence_count})" for t in answer.plan)
+        console.print(f"[dim]plan:[/dim] {plan_str}")
+
+    if answer.clarifying_question:
+        console.print(f"[yellow]Clarify:[/yellow] {answer.clarifying_question}")
+        return
+    if answer.abstained:
+        console.print("[yellow]Abstained[/yellow] — no grounded evidence for this question.")
+        return
+
+    console.print(f"\n[bold]A:[/bold] {answer.answer}")
+    console.print(f"[dim]confidence {answer.confidence:.2f} · citations: "
+                  f"{', '.join(answer.citations)}[/dim]")
+    if answer.claims:
+        claim_table = Table(title="Grounded claims")
+        claim_table.add_column("Claim")
+        claim_table.add_column("Cites")
+        for c in answer.claims:
+            claim_table.add_row(c.text, ", ".join(c.evidence_refs))
+        console.print(claim_table)
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     out: str = typer.Option(None, "--out", help="write the report as JSON to this path"),

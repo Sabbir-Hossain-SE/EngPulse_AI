@@ -24,9 +24,23 @@ log = get_logger(__name__)
 
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
+# Common words ignored when judging topical relevance (not when embedding).
+_STOPWORDS = {
+    "the", "a", "an", "of", "and", "to", "in", "on", "at", "for", "is", "are",
+    "was", "were", "be", "by", "with", "as", "it", "this", "that", "these",
+    "those", "they", "them", "we", "our", "you", "i", "what", "who", "when",
+    "where", "why", "how", "do", "does", "did", "about", "any", "there",
+}
+
 
 def tokenize(text: str) -> list[str]:
     return [t.lower() for t in _TOKEN_RE.findall(text or "")]
+
+
+def content_tokens(text: str) -> set[str]:
+    """Topical tokens (stopwords + 1-char tokens removed)."""
+
+    return {t for t in tokenize(text) if t not in _STOPWORDS and len(t) > 1}
 
 
 def cosine(a: list[float], b: list[float]) -> float:
