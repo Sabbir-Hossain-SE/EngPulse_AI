@@ -23,9 +23,17 @@ from engpulse.eval.score import PRFScore, prf
 from engpulse.ingest.github_ingest import _fetch as gh_fetch
 from engpulse.ingest.github_ingest import _persist as gh_persist
 from engpulse.ingest.linear_ingest import _persist as linear_persist
-from engpulse.metrics import compute_ci_health, compute_delivery, compute_pr_flow
+from engpulse.metrics import (
+    compute_ci_health,
+    compute_delivery,
+    compute_knowledge_risk,
+    compute_pr_flow,
+)
 from engpulse.resolve.identity import merge_people
 from engpulse.resolve.pr_issue import link_prs_to_issues
+
+
+__all__ = ["EvaluationReport", "run_evaluation", "ephemeral_corpus_session"]
 
 
 class EvaluationReport(BaseModel):
@@ -55,6 +63,27 @@ def _ephemeral_session() -> Session:
     return sessionmaker(bind=engine, expire_on_commit=False, future=True)()
 
 
+def ephemeral_corpus_session(corpus: Corpus | None = None) -> Session:
+    """An in-memory DB with the corpus ingested and entity-resolved.
+
+    Shared by the evaluation harness and the offline RAG demo so both exercise
+    the real pipeline with no external services.
+    """
+
+    corpus = corpus or load_corpus()
+    owner, name = corpus.repo["full_name"].split("/", 1)
+    session = _ephemeral_session()
+    bundle = asyncio.run(gh_fetch(corpus.github_client(), owner, name, 200, 500, 500))
+    gh_persist(session, corpus.repo["full_name"], bundle)
+    issues = asyncio.run(corpus.linear_client().list_issues(team_key=corpus.labels.team_key))
+    linear_persist(session, f"linear:{corpus.labels.team_key}", issues)
+    session.flush()
+    link_prs_to_issues(session)
+    merge_people(session)
+    session.flush()
+    return session
+
+
 def run_evaluation(
     corpus: Corpus | None = None, as_of: datetime | None = None
 ) -> EvaluationReport:
@@ -64,26 +93,14 @@ def run_evaluation(
         labels.as_of, datetime.min.time(), tzinfo=timezone.utc
     )
     repo_name = corpus.repo["full_name"]
-    owner, name = repo_name.split("/", 1)
 
-    session = _ephemeral_session()
+    session = ephemeral_corpus_session(corpus)
     try:
-        # --- ingest -------------------------------------------------------
-        bundle = asyncio.run(gh_fetch(corpus.github_client(), owner, name, 200, 500, 500))
-        gh_persist(session, repo_name, bundle)
-        issues = asyncio.run(corpus.linear_client().list_issues(team_key=labels.team_key))
-        linear_persist(session, f"linear:{labels.team_key}", issues)
-        session.flush()
-
-        # --- resolve ------------------------------------------------------
-        link_prs_to_issues(session)
-        merge_people(session)
-        session.flush()
-
         # --- detect -------------------------------------------------------
         pr_report = compute_pr_flow(session, repo_name, as_of=as_of)
         ci_report = compute_ci_health(session, repo_name)
         delivery_report = compute_delivery(session, team_key=labels.team_key, as_of=as_of)
+        knowledge_report = compute_knowledge_risk(session, repo_name)
 
         # --- score against ground truth -----------------------------------
         scores: list[PRFScore] = []
@@ -102,6 +119,11 @@ def run_evaluation(
             "deadline_drift",
             delivery_report.flagged_issues("deadline_drift"),
             {d.issue for d in labels.deadline_drifts},
+        ))
+        scores.append(prf(
+            "bus_factor",
+            knowledge_report.flagged_modules(),
+            {b.module for b in labels.bus_factors},
         ))
 
         predicted_links = {

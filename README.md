@@ -146,7 +146,7 @@ engpulse evaluate --out eval.json # also writes a JSON report
 
 | Task | Precision | Recall |
 |---|---|---|
-| stale_pr · flaky_test · deadline_drift | 1.00 | 1.00 |
+| stale_pr · flaky_test · deadline_drift · bus_factor | 1.00 | 1.00 |
 | pr_issue_link · identity_merge | 1.00 | 1.00 |
 
 > The corpus is a seed (a handful of deliberately injected cases); it grows toward

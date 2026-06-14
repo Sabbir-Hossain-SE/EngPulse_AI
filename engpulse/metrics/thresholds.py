@@ -35,10 +35,16 @@ class DeliveryThresholds(BaseModel):
     reestimation_min_changes: int = 1
 
 
+class KnowledgeThresholds(BaseModel):
+    bus_factor_max_owners: int = 1
+    bus_factor_min_commits: int = 2
+
+
 class Thresholds(BaseModel):
     pr_flow: PRFlowThresholds = PRFlowThresholds()
     ci_health: CIHealthThresholds = CIHealthThresholds()
     delivery: DeliveryThresholds = DeliveryThresholds()
+    knowledge: KnowledgeThresholds = KnowledgeThresholds()
 
 
 def load_thresholds(path: str | Path | None = None) -> Thresholds:

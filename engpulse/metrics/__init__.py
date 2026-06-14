@@ -3,6 +3,7 @@ over the normalized DB graph and emits a typed report with source-id evidence.""
 
 from engpulse.metrics.ci_health import CIHealthReport, compute_ci_health
 from engpulse.metrics.delivery import DeliveryReport, compute_delivery
+from engpulse.metrics.knowledge import KnowledgeRiskReport, compute_knowledge_risk
 from engpulse.metrics.pr_flow import PRFlowReport, compute_pr_flow
 from engpulse.metrics.thresholds import Thresholds, load_thresholds
 
@@ -15,4 +16,6 @@ __all__ = [
     "compute_ci_health",
     "DeliveryReport",
     "compute_delivery",
+    "KnowledgeRiskReport",
+    "compute_knowledge_risk",
 ]

@@ -18,3 +18,7 @@ delivery:
   stale_issue_days: 10          # non-done issue untouched this long → stale
   deadline_drift_min_moves: 2   # due-date moved at least this many times → drift
   reestimation_min_changes: 1   # estimate changed at least this many times → re-estimation
+
+knowledge:
+  bus_factor_max_owners: 1      # a module with at most this many owners is at risk
+  bus_factor_min_commits: 2     # …only if it has at least this many commits (real churn)
