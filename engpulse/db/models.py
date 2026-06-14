@@ -145,6 +145,8 @@ class Commit(TimestampMixin, Base):
     is_bugfix: Mapped[bool] = mapped_column(Boolean, default=False)
     committed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    author: Mapped["Person | None"] = relationship(foreign_keys=[author_id])
+
 
 class Issue(TimestampMixin, Base):
     __tablename__ = "issues"

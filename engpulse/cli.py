@@ -381,6 +381,121 @@ def delivery_cmd(
         console.print(f"WIP by assignee: {report.wip_by_assignee}")
 
 
+@app.command("knowledge")
+def knowledge_cmd(
+    repo: str = typer.Option(
+        None, "--repo", help="owner/name (defaults to GITHUB_REPO from config)"
+    ),
+) -> None:
+    """Knowledge-risk report: ownership map + single-point-of-failure modules."""
+
+    from engpulse.db.base import session_scope
+    from engpulse.metrics import compute_knowledge_risk
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+
+    with session_scope() as session:
+        report = compute_knowledge_risk(session, target)
+
+    table = Table(title=f"Ownership / bus-factor — {report.repo}")
+    for col in ("Module", "Owner", "Owners", "Commits", "Share", "Flags"):
+        table.add_column(col)
+    for m in report.modules:
+        table.add_row(
+            m.module, m.owner or "—", str(m.contributor_count), str(m.commit_count),
+            f"{m.ownership_share:.2f}", ", ".join(m.flags) or "—",
+        )
+    console.print(table)
+
+    if report.flags:
+        flag_table = Table(title="Knowledge-risk flags")
+        for col in ("Type", "Severity", "Module", "Evidence"):
+            flag_table.add_column(col)
+        for f in report.flags:
+            flag_table.add_row(f.type, f.severity, f.module, str(f.evidence))
+        console.print(flag_table)
+    else:
+        console.print("[green]No single-point-of-failure modules.[/green]")
+
+
+def _print_retrieval(query: str, results) -> None:
+    table = Table(title=f"Retrieved for: {query!r}")
+    for col in ("Rank", "Score", "Kind", "Ref", "Text"):
+        table.add_column(col)
+    for i, r in enumerate(results, 1):
+        snippet = r.chunk.text.replace("\n", " ")
+        table.add_row(str(i), f"{r.score:.3f}", r.chunk.kind, r.chunk.ref,
+                      snippet[:70] + ("…" if len(snippet) > 70 else ""))
+    console.print(table if results else "[yellow]No results.[/yellow]")
+
+
+@app.command("rag-demo")
+def rag_demo_cmd(
+    query: str = typer.Option(..., "--query", help="natural-language question"),
+    k: int = typer.Option(5, "--k", help="number of chunks to return"),
+) -> None:
+    """Offline hybrid-retrieval demo over the synthetic corpus (no services)."""
+
+    from engpulse.eval.harness import ephemeral_corpus_session
+    from engpulse.llm import build_embedding_client
+    from engpulse.rag import HybridRetriever, InMemoryVectorStore, build_index
+
+    corpus_repo = "acme/payments"
+    session = ephemeral_corpus_session()
+    embedder = build_embedding_client("fake")
+    store = InMemoryVectorStore()
+    n = build_index(session, corpus_repo, embedder, store)
+    console.print(f"Indexed [bold]{n}[/bold] chunks (fake embeddings, in-memory).")
+    retriever = HybridRetriever(store, embedder)
+    _print_retrieval(query, retriever.retrieve(query, k=k))
+
+
+@app.command("rag-index")
+def rag_index_cmd(
+    repo: str = typer.Option(None, "--repo", help="owner/name (defaults to GITHUB_REPO)"),
+) -> None:
+    """Build the live hybrid index into pgvector using Ollama embeddings."""
+
+    from engpulse.db.base import session_scope
+    from engpulse.llm import build_embedding_client
+    from engpulse.rag import build_index
+    from engpulse.rag.store import PgVectorStore
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+    embedder = build_embedding_client("ollama")
+    with session_scope() as session:
+        store = PgVectorStore(session, dim=embedder.dim, repo=target)
+        n = build_index(session, target, embedder, store)
+    console.print(f"[green]✓[/green] indexed {n} chunks for {target} into pgvector.")
+
+
+@app.command("rag-search")
+def rag_search_cmd(
+    query: str = typer.Option(..., "--query", help="natural-language question"),
+    repo: str = typer.Option(None, "--repo", help="owner/name (defaults to GITHUB_REPO)"),
+    k: int = typer.Option(5, "--k", help="number of chunks to return"),
+) -> None:
+    """Query the live pgvector hybrid index (needs Ollama + Postgres)."""
+
+    from engpulse.db.base import session_scope
+    from engpulse.llm import build_embedding_client
+    from engpulse.rag import HybridRetriever
+    from engpulse.rag.store import PgVectorStore
+
+    target = repo or get_settings().github_repo
+    embedder = build_embedding_client("ollama")
+    with session_scope() as session:
+        store = PgVectorStore(session, dim=embedder.dim, repo=target)
+        retriever = HybridRetriever(store, embedder)
+        _print_retrieval(query, retriever.retrieve(query, k=k))
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     out: str = typer.Option(None, "--out", help="write the report as JSON to this path"),

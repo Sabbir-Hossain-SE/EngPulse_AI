@@ -109,6 +109,19 @@ class CommitDTO(BaseModel):
     author_id: int | None = None
     author_email: str | None = None
     committed_at: datetime | None = None
+    files: list[str] = Field(default_factory=list)
+
+    @staticmethod
+    def _parse_files(raw) -> list[str]:
+        # The live commit-detail endpoint returns [{"filename": ...}, ...];
+        # the synthetic corpus uses a plain list of path strings.
+        files: list[str] = []
+        for item in raw or []:
+            if isinstance(item, str):
+                files.append(item)
+            elif isinstance(item, dict) and item.get("filename"):
+                files.append(item["filename"])
+        return files
 
     @classmethod
     def from_api(cls, data: dict) -> "CommitDTO":
@@ -122,6 +135,7 @@ class CommitDTO(BaseModel):
             author_id=author.get("id"),
             author_email=commit_author.get("email"),
             committed_at=commit_author.get("date"),
+            files=cls._parse_files(data.get("files")),
         )
 
 

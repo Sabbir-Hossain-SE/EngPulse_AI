@@ -170,7 +170,8 @@ def upsert_commit(
         session.add(commit)
     else:
         _apply(commit, norm,
-               ("repo_id", "author_id", "message", "is_bugfix", "committed_at"))
+               ("repo_id", "author_id", "message", "is_bugfix",
+                "files_changed", "committed_at"))
     session.flush()
     return commit
 

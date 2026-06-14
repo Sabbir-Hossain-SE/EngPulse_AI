@@ -217,12 +217,64 @@ identity_merge — all **precision 1.0 / recall 1.0**; macro 1.00/1.00.
 
 ---
 
-## What's next
+## Module 4 — Knowledge-Silo RAG + Grounded Synthesis 🔨 (in progress)
 
-⬜ **Module 4 — Knowledge-Silo RAG + Grounded Synthesis** (PRD §8.E/I,
-Milestone 4): ownership graph + bus-factor from commit/blame history, hybrid
-(vector + keyword) index over code/PR/issue text in pgvector with reranking, and
-grounded insight synthesis with schema enforcement + faithfulness checks. First
-module to use the Ollama LLM seam wired in Module 1.
+### Sub-step 4.1 — Ownership graph + bus-factor (Module E, deterministic) ✅
+
+**What we built:** Ownership map from commit→file history (`files` now ingested
+on commits; `Commit.author` relationship added) and a single-point-of-failure
+detector — a module owned by ≤N contributors *with real churn* → typed
+`KnowledgeRiskReport` with owner/commit evidence. New CLI: `engpulse knowledge`.
+Bus-factor added to the eval harness (now **6 labeled tasks**).
+
+**Verify:**
+```bash
+pytest                                                                   # 55 passed
+engpulse evaluate                                                        # 6 tasks, macro 1.00/1.00
+engpulse init-db && \
+  engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse knowledge --repo acme/payments
+```
+
+**Verified output:** `auth/tokens.py` flagged SPOF (dave, 3 commits); the other
+single-owner files (1 commit each) correctly *not* flagged. bus_factor eval
+**precision 1.0 / recall 1.0**.
+
+Decisions: **live Ollama** (real `OllamaEmbeddingClient` + deterministic
+`FakeEmbeddingClient` so tests stay offline) · **pluggable light reranker**
+(lexical default, cross-encoder swappable).
+
+### Sub-step 4.2 — RAG core ✅
+
+**What we built:** Model-agnostic embeddings (`engpulse.llm`: Ollama +
+deterministic fake), document builder (PR/issue/commit + synthesized ownership
+docs), chunking, a `VectorStore` (in-memory for tests/offline · `PgVectorStore`
+for prod), and a `HybridRetriever` — dense + keyword fused by RRF, then a
+pluggable `LexicalReranker`. Every chunk keeps its source ref for citation. New
+CLI: `rag-demo` (offline) · `rag-index` / `rag-search` (live Ollama + pgvector).
+
+**Verify (offline, no services):**
+```bash
+pytest                                                                   # 62 passed
+engpulse rag-demo --query "who owns the auth tokens module"   # → auth/tokens.py top
+engpulse rag-demo --query "PAY-20 checkout"                   # → issue PAY-20 (keyword)
+```
+
+**Verify live (your Ollama + Postgres):**
+```bash
+engpulse init-db && engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic
+engpulse rag-index  --repo acme/payments                      # embeds via Ollama into pgvector
+engpulse rag-search --repo acme/payments --query "who owns auth tokens"
+```
+
+**Verified output (offline):** semantic query ranks the `auth/tokens.py`
+ownership doc #1; exact key `PAY-20` retrieved via keyword; retrieval
+deterministic.
+
+### Remaining sub-step
+- ⬜ **4.3 — Grounded synthesis (Module I)**: flagged condition + retrieved
+  evidence → schema-enforced insight (Pydantic, retry/repair), hallucination
+  check (every claim maps to a source), abstention. Brings in the Ollama *chat*
+  client; closes out Module 4.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

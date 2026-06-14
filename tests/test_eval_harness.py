@@ -9,9 +9,10 @@ def test_harness_scores_every_task_perfectly():
     report = run_evaluation()
     scores = {s["detector"]: s for s in report.scores}
 
-    # All five labeled tasks are covered.
+    # All six labeled tasks are covered.
     assert set(scores) == {
-        "stale_pr", "flaky_test", "deadline_drift", "pr_issue_link", "identity_merge",
+        "stale_pr", "flaky_test", "deadline_drift", "bus_factor",
+        "pr_issue_link", "identity_merge",
     }
     # The corpus is designed to be fully detectable: every task is perfect.
     for detector, s in scores.items():

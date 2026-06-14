@@ -102,6 +102,7 @@ def to_commit(
         author_id=author_id,
         message=dto.message,
         is_bugfix=is_bugfix(dto.message),
+        files_changed=dto.files,
         committed_at=dto.committed_at,
     )
 
