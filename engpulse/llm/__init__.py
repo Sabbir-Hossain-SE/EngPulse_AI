@@ -5,6 +5,13 @@ Everything is reached via a base URL + model name in config, so the provider is
 swappable without code changes.
 """
 
+from engpulse.llm.chat import (
+    ChatClient,
+    FakeChatClient,
+    OllamaChatClient,
+    ScriptedChatClient,
+    build_chat_client,
+)
 from engpulse.llm.embeddings import (
     EmbeddingClient,
     FakeEmbeddingClient,
@@ -19,4 +26,9 @@ __all__ = [
     "FakeEmbeddingClient",
     "build_embedding_client",
     "cosine",
+    "ChatClient",
+    "OllamaChatClient",
+    "FakeChatClient",
+    "ScriptedChatClient",
+    "build_chat_client",
 ]
