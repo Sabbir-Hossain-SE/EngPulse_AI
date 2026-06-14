@@ -1,0 +1,47 @@
+[
+  {
+    "sha": "auth1sha",
+    "author": { "login": "dave", "id": 2001 },
+    "commit": {
+      "message": "Refactor auth token parsing",
+      "author": { "name": "Dave", "email": "dave@acme.com", "date": "2026-05-01T08:55:00Z" }
+    },
+    "files": ["auth/tokens.py", "auth/utils.py"]
+  },
+  {
+    "sha": "auth2sha",
+    "author": { "login": "dave", "id": 2001 },
+    "commit": {
+      "message": "Tighten token expiry handling",
+      "author": { "name": "Dave", "email": "dave@acme.com", "date": "2026-04-20T08:55:00Z" }
+    },
+    "files": ["auth/tokens.py"]
+  },
+  {
+    "sha": "auth3sha",
+    "author": { "login": "dave", "id": 2001 },
+    "commit": {
+      "message": "Fix token edge case on refresh",
+      "author": { "name": "Dave", "email": "dave@acme.com", "date": "2026-03-15T08:55:00Z" }
+    },
+    "files": ["auth/tokens.py"]
+  },
+  {
+    "sha": "f1aky00sha",
+    "author": { "login": "erin", "id": 2002 },
+    "commit": {
+      "message": "Stabilize checkout timeout",
+      "author": { "name": "Erin", "email": "erin@acme.com", "date": "2026-06-10T09:55:00Z" }
+    },
+    "files": ["checkout/timeout.py"]
+  },
+  {
+    "sha": "retry00sha",
+    "author": { "login": "dave", "id": 2001 },
+    "commit": {
+      "message": "Add payment retry with backoff",
+      "author": { "name": "Dave", "email": "dave@acme.com", "date": "2026-06-05T07:55:00Z" }
+    },
+    "files": ["payments/retry.py"]
+  }
+]

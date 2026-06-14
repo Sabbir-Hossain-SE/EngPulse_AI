@@ -1,0 +1,56 @@
+{
+  "as_of": "2026-06-14",
+  "repo": "acme/payments",
+  "team_key": "PAY",
+  "description": "Synthetic corpus with deliberately injected problems for scoring detectors and entity resolution. Every label references a real entity in the corpus.",
+
+  "stale_prs": [
+    {
+      "pr_number": 1,
+      "min_age_days": 30,
+      "unreviewed": true,
+      "note": "Open since 2026-05-01 (~44 days vs as_of) with no submitted review."
+    }
+  ],
+
+  "flaky_tests": [
+    {
+      "test": "test_checkout_timeout",
+      "commit_sha": "f1aky00sha",
+      "note": "Fails on run attempt 1 and passes on attempt 2 for the same commit SHA."
+    }
+  ],
+
+  "deadline_drifts": [
+    {
+      "issue": "PAY-12",
+      "original_due": "2026-05-15",
+      "current_due": "2026-06-30",
+      "moves": 3,
+      "note": "Due date moved three times across the issue history."
+    }
+  ],
+
+  "bus_factors": [
+    {
+      "module": "auth/tokens.py",
+      "owner": "dave",
+      "contributors": ["dave"],
+      "contributor_count": 1,
+      "note": "auth/tokens.py is touched only by dave across three commits."
+    }
+  ],
+
+  "pr_issue_links": [
+    { "pr_number": 1, "issue": "PAY-12", "method": "branch" },
+    { "pr_number": 2, "issue": "PAY-20", "method": "body_keyword" },
+    { "pr_number": 3, "issue": "PAY-21", "method": "body_mention" }
+  ],
+
+  "identities": [
+    { "email": "dave@acme.com", "github_login": "dave", "tracker_id": "lin-dave" },
+    { "email": "erin@acme.com", "github_login": "erin", "tracker_id": "lin-erin" }
+  ],
+  "people_before": 6,
+  "people_after": 4
+}

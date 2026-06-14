@@ -109,6 +109,9 @@ def ingest_github_cmd(
     dry_run: bool = typer.Option(
         False, "--dry-run", help="fetch + count but do not write to the DB"
     ),
+    fixtures_dir: str = typer.Option(
+        None, "--fixtures-dir", help="fixture corpus directory (for --source fixture)"
+    ),
 ) -> None:
     """Incremental GitHub ingestion: PRs+reviews, commits, and CI runs."""
 
@@ -126,6 +129,7 @@ def ingest_github_cmd(
     report = ingest_github(
         target, source=source, pr_limit=pr_limit,
         commit_limit=commit_limit, run_limit=run_limit, dry_run=dry_run,
+        fixtures_dir=fixtures_dir,
     )
 
     table = Table(title=f"Ingest report — {report.repo_full_name}")
@@ -155,6 +159,9 @@ def ingest_linear_cmd(
     dry_run: bool = typer.Option(
         False, "--dry-run", help="fetch + count but do not write to the DB"
     ),
+    fixtures_dir: str = typer.Option(
+        None, "--fixtures-dir", help="fixture corpus directory (for --source fixture)"
+    ),
 ) -> None:
     """Incremental Linear ingestion: issues, status, estimates, transitions."""
 
@@ -165,7 +172,10 @@ def ingest_linear_cmd(
         f"Ingesting Linear (team={team or 'all'}) via [bold]{source}[/bold] "
         f"(dry_run={dry_run})…"
     )
-    report = ingest_linear(source=source, team_key=team, limit=limit, dry_run=dry_run)
+    report = ingest_linear(
+        source=source, team_key=team, limit=limit, dry_run=dry_run,
+        fixtures_dir=fixtures_dir,
+    )
 
     table = Table(title=f"Linear ingest report — {report.scope}")
     table.add_column("Metric", style="cyan")
@@ -213,6 +223,39 @@ def resolve_cmd(
     id_table.add_row("Merged", str(ident["merged"]))
     id_table.add_row("By method", ", ".join(f"{k}={v}" for k, v in ident["by_method"].items()) or "—")
     console.print(id_table)
+
+
+@app.command("corpus-check")
+def corpus_check(
+    path: str = typer.Option(
+        None, "--path", help="corpus directory (defaults to datasets/synthetic)"
+    ),
+) -> None:
+    """Load the labeled synthetic corpus and validate its internal consistency."""
+
+    from engpulse.eval import load_corpus, validate_corpus
+
+    corpus = load_corpus(path)
+    problems = validate_corpus(corpus)
+    labels = corpus.labels
+
+    table = Table(title=f"Synthetic corpus — {labels.repo}")
+    table.add_column("Injected problem", style="cyan")
+    table.add_column("Count", justify="right")
+    table.add_row("Stale PRs", str(len(labels.stale_prs)))
+    table.add_row("Flaky tests", str(len(labels.flaky_tests)))
+    table.add_row("Deadline drifts", str(len(labels.deadline_drifts)))
+    table.add_row("Bus-factor modules", str(len(labels.bus_factors)))
+    table.add_row("PR↔Issue links", str(len(labels.pr_issue_links)))
+    table.add_row("Identity merges", str(len(labels.identities)))
+    console.print(table)
+
+    if problems:
+        console.print(f"[red]✗ {len(problems)} consistency problem(s):[/red]")
+        for problem in problems:
+            console.print(f"  • {problem}")
+        raise typer.Exit(code=1)
+    console.print("[green]✓ corpus is internally consistent[/green]")
 
 
 def _print_audit(audits: list[dict]) -> None:

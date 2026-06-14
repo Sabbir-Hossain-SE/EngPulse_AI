@@ -114,11 +114,12 @@ def ingest_linear(
     limit: int = 200,
     since: datetime | None = None,
     dry_run: bool = False,
+    fixtures_dir: str | None = None,
 ) -> LinearIngestReport:
     """Ingest Linear issues for a team (or all teams) end-to-end."""
 
     scope = f"linear:{team_key or 'all'}"
-    client = build_linear_client(source)
+    client = build_linear_client(source, fixtures_dir)
 
     # Live incremental: resume from the stored high-water mark unless overridden.
     if since is None and source == "live":

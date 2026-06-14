@@ -1,0 +1,9 @@
+{
+  "id": 800200300,
+  "name": "payments",
+  "full_name": "acme/payments",
+  "owner": { "login": "acme", "id": 7001 },
+  "default_branch": "main",
+  "html_url": "https://github.com/acme/payments",
+  "pushed_at": "2026-06-13T18:00:00Z"
+}

@@ -31,7 +31,7 @@ docker compose up -d postgres && engpulse init-db && \
 
 ---
 
-## Module 2 — Ingestion & Normalization 🔨 (in progress)
+## Module 2 — Ingestion & Normalization ✅ (complete)
 
 Decisions: **live Linear** (connector supports live + offline fixtures) · sync =
 **incremental cursors now, webhooks stubbed**.
@@ -104,9 +104,38 @@ docker compose up -d postgres && engpulse init-db && \
 identities 5→3 (alice & bob each carry both GitHub + Linear ids, carol
 untouched); FKs repointed (alice→2 issues, bob→1); re-run idempotent.
 
-### Remaining sub-step
-- ⬜ **2.4 — Labeled fixtures**: synthetic corpus with injected problems
-  (stale PR, flaky test, deadline drift, single-owner module) + `labels.json`
-  — the eval-harness seed. Closes out Module 2.
+### Sub-step 2.4 — Labeled synthetic fixtures ✅
+
+**What we built:** A synthetic corpus (`acme/payments`, `datasets/synthetic/`) in
+the connector shapes with four **deliberately injected problems** — a stale
+unreviewed PR, a flaky test (same SHA flips fail→pass), a deadline-drift issue
+(due moved 3×), and a single-owner module — plus expected PR↔issue links and
+identity merges in a `labels.json` ground-truth file. Typed loader
+(`engpulse.eval`), a `validate_corpus` consistency check, and `corpus-check` CLI.
+Ingest commands gained `--fixtures-dir` so the corpus runs through the real
+pipeline. This is the eval-harness seed (PRD §13).
+
+**Verify:**
+```bash
+pytest                                                                   # 37 passed
+engpulse corpus-check                                                    # ✓ consistent
+engpulse init-db && \
+  engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse ingest-linear --team PAY --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse resolve
+```
+
+**Verified output:** corpus is internally consistent; flows through ingest+resolve
+reproducing every label — 3/3 PR links (branch / body_keyword / body_mention),
+identities 6→4, PAY-12 drift 2026-05-15→2026-06-30.
+
+---
+
+## What's next
+
+⬜ **Module 3 — Metrics & Detectors** (PRD §8.B/C/D + Milestone 3): deterministic
+PR-flow, CI/test-health, and delivery-drift metrics with unit tests, **plus the
+eval harness** scoring detector precision/recall against the `datasets/synthetic`
+labels. The labeled corpus from 2.4 is what makes those numbers possible.
 
 > Per working agreement: checkpoint each sub-step before starting the next.
