@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # --- Redis / Celery ----------------------------------------------------
     redis_url: str = "redis://localhost:6379/0"
 
+    # --- Dashboard (CORS origin allowed to call the API) -------------------
+    dashboard_url: str = "http://localhost:3000"
+
     # --- Langfuse ----------------------------------------------------------
     langfuse_host: str = "http://localhost:3000"
     langfuse_public_key: str = ""
