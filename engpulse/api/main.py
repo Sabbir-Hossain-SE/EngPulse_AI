@@ -9,9 +9,12 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from engpulse import __version__
+from engpulse.api.routes import ask, projects
 from engpulse.config import get_settings
 
 app = FastAPI(title="EngPulse AI", version=__version__)
+app.include_router(projects.router)
+app.include_router(ask.router)
 
 
 @app.get("/health")

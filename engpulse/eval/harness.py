@@ -116,7 +116,16 @@ def evaluate_agent(session: Session, corpus: Corpus) -> dict:
 
 
 def _ephemeral_session() -> Session:
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    # StaticPool + check_same_thread=False keeps a single shared in-memory DB that
+    # also works across threads (e.g. Starlette's TestClient request thread).
+    from sqlalchemy.pool import StaticPool
+
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        future=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, expire_on_commit=False, future=True)()
 
