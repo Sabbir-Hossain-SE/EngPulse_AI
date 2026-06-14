@@ -352,12 +352,31 @@ engpulse evaluate  # agent: recall/faithfulness/abstention all 1.00
 
 ---
 
-## What's next
+## Module 6 — Scoring + Alerts + Digests 🔨 (in progress)
 
-⬜ **Module 6 — Scoring engine + alert router + digests** (PRD §8.H/K,
-Milestone 5/6): a transparent config-driven 0–100 project-health score combining
-the detector sub-scores with status banding (Healthy/Watch/At Risk/Critical),
-then severity-classified alert routing to the right role (EM/TL/PM/IC) plus daily
-digest / weekly report generation with de-duplication.
+### Sub-step 6.1 — Scoring engine (Module H) ✅
+
+**What we built:** A transparent, YAML-driven health model
+(`config/scoring.yaml` → typed `ScoringConfig`): each sub-score (review_flow,
+delivery, ci_test, knowledge) starts at 100 and loses points per flag by
+severity; composite = weighted average → status band (Healthy/Watch/At Risk/
+Critical). Every score decomposes to its contributing flags; persisted as a
+`Score` row with delta + denormalized onto the repo. New CLI: `engpulse score`.
+
+**Verify:**
+```bash
+pytest                                                  # 83 passed
+engpulse init-db && ...ingest... && engpulse resolve && \
+  engpulse score --repo acme/payments --team PAY --as-of 2026-06-14 --persist
+```
+
+**Verified output:** review_flow 75 · delivery 45 · ci_test 90 · knowledge 80 →
+composite **70.0 = At Risk**, persisted with breakdown + delta.
+
+### Remaining sub-step
+- ⬜ **6.2 — Alert router + digests (Module K)**: detector flags → severity-
+  classified alerts routed to EM/TL/PM/IC, de-dup + suppression, daily digest +
+  weekly report (role-filtered), each alert with evidence/confidence/action/owner.
+  Closes out Module 6.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

@@ -381,6 +381,54 @@ def delivery_cmd(
         console.print(f"WIP by assignee: {report.wip_by_assignee}")
 
 
+@app.command("score")
+def score_cmd(
+    repo: str = typer.Option(None, "--repo", help="owner/name (defaults to GITHUB_REPO)"),
+    team: str = typer.Option(None, "--team", help="Linear team key (defaults to LINEAR_TEAM_KEY)"),
+    as_of: str = typer.Option(None, "--as-of", help="ISO reference timestamp (default: now)"),
+    persist: bool = typer.Option(False, "--persist", help="write a Score row (with delta)"),
+) -> None:
+    """Project-health score: weighted 0–100 composite + status band + breakdown."""
+
+    from datetime import datetime, timezone
+
+    from engpulse.db.base import session_scope
+    from engpulse.scoring import compute_project_score, persist_project_score
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+    team_key = team if team is not None else (get_settings().linear_team_key or None)
+    as_of_dt = (
+        datetime.fromisoformat(as_of).replace(tzinfo=timezone.utc)
+        if as_of else datetime.now(timezone.utc)
+    )
+
+    with session_scope() as session:
+        score = compute_project_score(session, target, team_key=team_key, as_of=as_of_dt)
+        row = persist_project_score(session, score) if persist else None
+        delta = row.delta if row else None
+
+    band_color = {"Healthy": "green", "Watch": "yellow",
+                  "At Risk": "dark_orange", "Critical": "red"}.get(score.band, "white")
+    console.print(
+        f"[bold]{score.project}[/bold] health: "
+        f"[{band_color}]{score.composite:.1f} — {score.band}[/{band_color}]"
+        + (f"  (Δ {delta:+.1f})" if delta is not None else "")
+    )
+
+    table = Table(title="Score breakdown")
+    for col in ("Sub-score", "Score", "Weight", "Penalty", "Flags", "Contributors"):
+        table.add_column(col)
+    for s in score.sub_scores:
+        table.add_row(
+            s.name, f"{s.score:.0f}", f"{s.weight:.2f}", f"{s.penalty:.0f}",
+            str(s.flag_count), ", ".join(s.contributors) or "—",
+        )
+    console.print(table)
+
+
 @app.command("knowledge")
 def knowledge_cmd(
     repo: str = typer.Option(
