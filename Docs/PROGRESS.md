@@ -131,11 +131,38 @@ identities 6→4, PAY-12 drift 2026-05-15→2026-06-30.
 
 ---
 
-## What's next
+## Module 3 — Metrics & Detectors 🔨 (in progress)
 
-⬜ **Module 3 — Metrics & Detectors** (PRD §8.B/C/D + Milestone 3): deterministic
-PR-flow, CI/test-health, and delivery-drift metrics with unit tests, **plus the
-eval harness** scoring detector precision/recall against the `datasets/synthetic`
-labels. The labeled corpus from 2.4 is what makes those numbers possible.
+Deterministic signals (no LLM) over the linked graph; typed reports with
+source-id evidence; thresholds in YAML; each detector scored against the
+`datasets/synthetic` labels as it lands.
+
+### Sub-step 3.1 — PR-Flow Analyzer (Module B) ✅
+
+**What we built:** YAML-backed `Thresholds` (`config/thresholds.yaml`), a
+precision/recall scorer (`engpulse.eval.prf`), and the PR-flow detector:
+per-PR metrics (time-to-first-review, time-to-merge, size, rounds, reviewers)
+and flags (stale / abandoned / unreviewed / oversized / merged-without-review /
+review-bottleneck) → typed `PRFlowReport` with evidence. Reproducible via an
+injectable `as_of`. New CLI: `engpulse pr-flow`.
+
+**Verify:**
+```bash
+pytest                                                                   # 41 passed
+engpulse init-db && \
+  engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse pr-flow --repo acme/payments --as-of 2026-06-14
+```
+
+**Verified output:** PR#1 flagged abandoned+unreviewed (the labeled stale PR);
+stale-PR detection scores **precision 1.0 / recall 1.0** against the corpus.
+
+### Remaining sub-steps
+- ⬜ **3.2 — CI/Test-Health (Module C)**: flaky-test (same SHA flips), failure
+  clustering, duration trends → `CIHealthReport`; scored vs `flaky_tests`.
+- ⬜ **3.3 — Delivery/Drift (Module D)**: cycle time, stale issues, deadline
+  drift, re-estimation, done-without-merged-PR → `DeliveryReport`; vs `deadline_drifts`.
+- ⬜ **3.4 — Consolidated eval harness**: one `evaluate` CLI + combined
+  precision/recall across detectors and entity resolution.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

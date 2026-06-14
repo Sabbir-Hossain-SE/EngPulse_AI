@@ -225,6 +225,61 @@ def resolve_cmd(
     console.print(id_table)
 
 
+@app.command("pr-flow")
+def pr_flow_cmd(
+    repo: str = typer.Option(
+        None, "--repo", help="owner/name (defaults to GITHUB_REPO from config)"
+    ),
+    as_of: str = typer.Option(
+        None, "--as-of", help="ISO timestamp reference for staleness (default: now)"
+    ),
+) -> None:
+    """PR & review-flow report: per-PR metrics and flow detectors."""
+
+    from datetime import datetime, timezone
+
+    from engpulse.db.base import session_scope
+    from engpulse.metrics import compute_pr_flow
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+    as_of_dt = (
+        datetime.fromisoformat(as_of).replace(tzinfo=timezone.utc)
+        if as_of
+        else datetime.now(timezone.utc)
+    )
+
+    with session_scope() as session:
+        report = compute_pr_flow(session, target, as_of=as_of_dt)
+
+    metrics_table = Table(title=f"PR-flow — {report.repo} (as of {report.as_of.date()})")
+    for col in ("PR", "State", "Author", "Lines", "TTFR h", "TTM h", "Rounds", "Flags"):
+        metrics_table.add_column(col)
+    for pr in report.pull_requests:
+        metrics_table.add_row(
+            f"#{pr.number}", pr.state or "—", pr.author or "—", str(pr.size_lines),
+            "—" if pr.time_to_first_review_hours is None else str(pr.time_to_first_review_hours),
+            "—" if pr.time_to_merge_hours is None else str(pr.time_to_merge_hours),
+            str(pr.review_rounds), ", ".join(pr.flags) or "—",
+        )
+    console.print(metrics_table)
+
+    if report.flags:
+        flag_table = Table(title="Flags")
+        for col in ("Type", "Severity", "PR", "Evidence"):
+            flag_table.add_column(col)
+        for f in report.flags:
+            flag_table.add_row(
+                f.type, f.severity,
+                f"#{f.pr_number}" if f.pr_number else "—", str(f.evidence),
+            )
+        console.print(flag_table)
+    else:
+        console.print("[green]No flags raised.[/green]")
+
+
 @app.command("corpus-check")
 def corpus_check(
     path: str = typer.Option(
