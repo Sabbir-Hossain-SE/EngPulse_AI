@@ -9,6 +9,8 @@ Run via the installed console script (`engpulse ...`) or `python -m engpulse.cli
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -377,6 +379,43 @@ def delivery_cmd(
         console.print(flag_table)
     if report.wip_by_assignee:
         console.print(f"WIP by assignee: {report.wip_by_assignee}")
+
+
+@app.command("evaluate")
+def evaluate_cmd(
+    out: str = typer.Option(None, "--out", help="write the report as JSON to this path"),
+) -> None:
+    """Run all detectors + entity resolution on the labeled corpus and score them.
+
+    Self-contained: builds an ephemeral in-memory DB, so no services are needed.
+    """
+
+    import json as _json
+
+    from engpulse.eval import run_evaluation
+
+    report = run_evaluation()
+
+    table = Table(title="EngPulse evaluation — labeled synthetic corpus")
+    for col in ("Task", "TP", "FP", "FN", "Precision", "Recall", "F1"):
+        table.add_column(col)
+    for s in report.scores:
+        table.add_row(
+            s["detector"], str(s["tp"]), str(s["fp"]), str(s["fn"]),
+            f"{s['precision']:.2f}", f"{s['recall']:.2f}", f"{s['f1']:.2f}",
+        )
+    console.print(table)
+    console.print(f"[bold]{report.headline()}[/bold]")
+
+    if out:
+        payload = {
+            "as_of": report.as_of.isoformat(),
+            "macro_precision": report.macro_precision,
+            "macro_recall": report.macro_recall,
+            "scores": report.scores,
+        }
+        Path(out).write_text(_json.dumps(payload, indent=2))
+        console.print(f"[green]✓[/green] wrote {out}")
 
 
 @app.command("corpus-check")

@@ -131,11 +131,11 @@ identities 6→4, PAY-12 drift 2026-05-15→2026-06-30.
 
 ---
 
-## Module 3 — Metrics & Detectors 🔨 (in progress)
+## Module 3 — Metrics & Detectors ✅ (complete)
 
 Deterministic signals (no LLM) over the linked graph; typed reports with
 source-id evidence; thresholds in YAML; each detector scored against the
-`datasets/synthetic` labels as it lands.
+`datasets/synthetic` labels.
 
 ### Sub-step 3.1 — PR-Flow Analyzer (Module B) ✅
 
@@ -198,8 +198,31 @@ engpulse init-db && \
 + stale + re-estimation; PAY-20 flagged done_without_merged_pr (linked PR open).
 Drift detection scores **precision 1.0 / recall 1.0** vs the corpus.
 
-### Remaining sub-step
-- ⬜ **3.4 — Consolidated eval harness**: one `evaluate` CLI + combined
-  precision/recall across detectors and entity resolution.
+### Sub-step 3.4 — Consolidated eval harness ✅
+
+**What we built:** `engpulse.eval.run_evaluation` runs the full pipeline
+(ingest → resolve → detect) over the labeled corpus on an **ephemeral in-memory
+DB** (no services) and scores all five tasks against ground truth via the
+precision/recall scorer. New CLI: `engpulse evaluate [--out report.json]`.
+README now carries the headline metrics.
+
+**Verify:**
+```bash
+pytest              # 53 passed
+engpulse evaluate   # no services needed
+```
+
+**Verified output:** stale_pr, flaky_test, deadline_drift, pr_issue_link,
+identity_merge — all **precision 1.0 / recall 1.0**; macro 1.00/1.00.
+
+---
+
+## What's next
+
+⬜ **Module 4 — Knowledge-Silo RAG + Grounded Synthesis** (PRD §8.E/I,
+Milestone 4): ownership graph + bus-factor from commit/blame history, hybrid
+(vector + keyword) index over code/PR/issue text in pgvector with reranking, and
+grounded insight synthesis with schema enforcement + faithfulness checks. First
+module to use the Ollama LLM seam wired in Module 1.
 
 > Per working agreement: checkpoint each sub-step before starting the next.
