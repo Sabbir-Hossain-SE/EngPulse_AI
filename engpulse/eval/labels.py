@@ -52,6 +52,12 @@ class IdentityLabel(BaseModel):
     tracker_id: str
 
 
+class AgentQuestionLabel(BaseModel):
+    question: str
+    expected_sources: list[str] = Field(default_factory=list)
+    answerable: bool = True
+
+
 class CorpusLabels(BaseModel):
     as_of: date
     repo: str
@@ -63,5 +69,6 @@ class CorpusLabels(BaseModel):
     bus_factors: list[BusFactorLabel] = Field(default_factory=list)
     pr_issue_links: list[PrIssueLinkLabel] = Field(default_factory=list)
     identities: list[IdentityLabel] = Field(default_factory=list)
+    agent_questions: list[AgentQuestionLabel] = Field(default_factory=list)
     people_before: int | None = None
     people_after: int | None = None

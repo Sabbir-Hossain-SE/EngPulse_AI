@@ -310,7 +310,7 @@ Live chat: `engpulse synthesize --source ollama` (uses your chat model for the p
 
 ---
 
-## Module 5 — Ask EngPulse agent 🔨 (in progress)
+## Module 5 — Ask EngPulse agent ✅ (complete)
 
 ### Sub-step 5.1 — Agent core ✅
 
@@ -334,9 +334,30 @@ Live: `engpulse ask "..." --source ollama --planner llm`.
 **Verified output:** ownership question → multi-hop plan, cited answer
 (`metric:auth/tokens.py`, …); unanswerable → abstains; vague → clarifies.
 
-### Remaining sub-step
-- ⬜ **5.2 — Agent eval (PRD §13)**: fixed question set with expected sources +
-  unanswerable questions → score answer-citation faithfulness + correct-abstention
-  rate; add to the harness. Closes out Module 5.
+### Sub-step 5.2 — Agent eval (PRD §13) ✅
+
+**What we built:** A labeled question set in the corpus (`agent_questions`:
+answerable + unanswerable) and `evaluate_agent` scoring **source recall**,
+**citation faithfulness**, and **correct-abstention rate**, surfaced in
+`engpulse evaluate` and the JSON report.
+
+**Verify:**
+```bash
+pytest             # 79 passed
+engpulse evaluate  # agent: recall/faithfulness/abstention all 1.00
+```
+
+**Verified output:** 3/5 answerable; source recall 1.00, citation faithfulness
+1.00, correct abstention 1.00 — alongside the 6 detector tasks at 1.0/1.0.
+
+---
+
+## What's next
+
+⬜ **Module 6 — Scoring engine + alert router + digests** (PRD §8.H/K,
+Milestone 5/6): a transparent config-driven 0–100 project-health score combining
+the detector sub-scores with status banding (Healthy/Watch/At Risk/Critical),
+then severity-classified alert routing to the right role (EM/TL/PM/IC) plus daily
+digest / weekly report generation with de-duplication.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

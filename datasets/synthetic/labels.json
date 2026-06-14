@@ -51,6 +51,15 @@
     { "email": "dave@acme.com", "github_login": "dave", "tracker_id": "lin-dave" },
     { "email": "erin@acme.com", "github_login": "erin", "tracker_id": "lin-erin" }
   ],
+
+  "agent_questions": [
+    { "question": "who owns the auth tokens module", "expected_sources": ["metric:auth/tokens.py"], "answerable": true },
+    { "question": "is the payments project at risk", "expected_sources": ["metric:PAY-12:deadline_drift"], "answerable": true },
+    { "question": "are there any flaky tests", "expected_sources": ["metric:flaky:test_checkout_timeout"], "answerable": true },
+    { "question": "what is the meaning of life", "expected_sources": [], "answerable": false },
+    { "question": "tell me about the weather on mars", "expected_sources": [], "answerable": false }
+  ],
+
   "people_before": 6,
   "people_after": 4
 }
