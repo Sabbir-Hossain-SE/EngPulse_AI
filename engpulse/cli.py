@@ -330,6 +330,55 @@ def ci_health_cmd(
         console.print(trend_table)
 
 
+@app.command("delivery")
+def delivery_cmd(
+    team_key: str = typer.Option(
+        None, "--team", help="Linear team key (defaults to LINEAR_TEAM_KEY)"
+    ),
+    as_of: str = typer.Option(
+        None, "--as-of", help="ISO timestamp reference for staleness (default: now)"
+    ),
+) -> None:
+    """Delivery report: cycle time, stale issues, drift, re-estimation gaps."""
+
+    from datetime import datetime, timezone
+
+    from engpulse.db.base import session_scope
+    from engpulse.metrics import compute_delivery
+
+    team = team_key if team_key is not None else (get_settings().linear_team_key or None)
+    as_of_dt = (
+        datetime.fromisoformat(as_of).replace(tzinfo=timezone.utc)
+        if as_of
+        else datetime.now(timezone.utc)
+    )
+
+    with session_scope() as session:
+        report = compute_delivery(session, team_key=team, as_of=as_of_dt)
+
+    issue_table = Table(title=f"Delivery — {report.scope} (as of {report.as_of.date()})")
+    for col in ("Issue", "Status", "Assignee", "Cycle d", "Age d", "Due moves", "Re-est", "Flags"):
+        issue_table.add_column(col)
+    for i in report.issues:
+        issue_table.add_row(
+            i.key, i.status or "—", i.assignee or "—",
+            "—" if i.cycle_time_days is None else str(i.cycle_time_days),
+            "—" if i.age_days is None else str(i.age_days),
+            str(i.due_moves), str(i.reestimations), ", ".join(i.flags) or "—",
+        )
+    console.print(issue_table)
+
+    if report.flags:
+        flag_table = Table(title="Flags")
+        for col in ("Type", "Severity", "Issue", "Evidence"):
+            flag_table.add_column(col)
+        for f in report.flags:
+            flag_table.add_row(f.type, f.severity, f.issue, str(f.evidence))
+        console.print(flag_table)
+    if report.wip_by_assignee:
+        console.print(f"WIP by assignee: {report.wip_by_assignee}")
+
+
 @app.command("corpus-check")
 def corpus_check(
     path: str = typer.Option(
