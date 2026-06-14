@@ -157,9 +157,27 @@ engpulse init-db && \
 **Verified output:** PR#1 flagged abandoned+unreviewed (the labeled stale PR);
 stale-PR detection scores **precision 1.0 / recall 1.0** against the corpus.
 
+### Sub-step 3.2 — CI/Test-Health Detector (Module C) ✅
+
+**What we built:** Flaky-test detection (a test that fails then passes on the
+*same commit SHA*, ranked by flip rate), failure clustering (by failing-test
+signature), and per-workflow duration trends with regression flags → typed
+`CIHealthReport`, each finding grounded in CI run ids. Ingestion now persists
+`failed_tests` (CIRunDTO → CIRun). New CLI: `engpulse ci-health`.
+
+**Verify:**
+```bash
+pytest                                                                   # 45 passed
+engpulse init-db && \
+  engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse ci-health --repo acme/payments
+```
+
+**Verified output:** `test_checkout_timeout` flagged flaky on `f1aky00sha`
+(flip rate 0.5, runs 991000001/991000002); flaky detection scores
+**precision 1.0 / recall 1.0** vs the corpus.
+
 ### Remaining sub-steps
-- ⬜ **3.2 — CI/Test-Health (Module C)**: flaky-test (same SHA flips), failure
-  clustering, duration trends → `CIHealthReport`; scored vs `flaky_tests`.
 - ⬜ **3.3 — Delivery/Drift (Module D)**: cycle time, stale issues, deadline
   drift, re-estimation, done-without-merged-PR → `DeliveryReport`; vs `deadline_drifts`.
 - ⬜ **3.4 — Consolidated eval harness**: one `evaluate` CLI + combined

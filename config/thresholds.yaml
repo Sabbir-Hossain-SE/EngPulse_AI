@@ -8,3 +8,8 @@ pr_flow:
   oversized_pr_lines: 500   # additions + deletions above this → oversized
   oversized_pr_files: 20    # changed files above this → oversized
   reviewer_concentration: 0.5  # one reviewer handling > this share → bottleneck
+
+ci_health:
+  flaky_min_runs: 2             # min runs on a SHA before flakiness is considered
+  duration_regression_pct: 0.5  # workflow latest/earliest growth above this → regression
+  duration_min_runs: 3          # min runs before a duration trend is reported

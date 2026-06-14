@@ -122,6 +122,7 @@ def to_ci_run(
         conclusion=dto.conclusion,
         run_attempt=dto.run_attempt,
         duration_seconds=duration,
+        failed_tests=dto.failed_tests,
         run_started_at=dto.run_started_at,
         source_updated_at=dto.updated_at,
     )

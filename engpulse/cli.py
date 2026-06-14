@@ -280,6 +280,56 @@ def pr_flow_cmd(
         console.print("[green]No flags raised.[/green]")
 
 
+@app.command("ci-health")
+def ci_health_cmd(
+    repo: str = typer.Option(
+        None, "--repo", help="owner/name (defaults to GITHUB_REPO from config)"
+    ),
+) -> None:
+    """CI/test-health report: flaky tests, failure clusters, duration trends."""
+
+    from engpulse.db.base import session_scope
+    from engpulse.metrics import compute_ci_health
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+
+    with session_scope() as session:
+        report = compute_ci_health(session, target)
+
+    flaky_table = Table(title=f"Flaky tests — {report.repo}")
+    for col in ("Test", "Flip rate", "Fail/Total", "SHAs", "Run ids"):
+        flaky_table.add_column(col)
+    for f in report.flaky_tests:
+        flaky_table.add_row(
+            f.test, str(f.flip_rate), f"{f.fail_runs}/{f.total_runs}",
+            ", ".join(f.commit_shas), ", ".join(map(str, f.evidence_run_ids)),
+        )
+    console.print(flaky_table if report.flaky_tests else "[green]No flaky tests.[/green]")
+
+    if report.failure_clusters:
+        cluster_table = Table(title="Failure clusters")
+        for col in ("Signature", "Count", "Run ids"):
+            cluster_table.add_column(col)
+        for c in report.failure_clusters:
+            cluster_table.add_row(c.signature, str(c.count), ", ".join(map(str, c.run_ids)))
+        console.print(cluster_table)
+
+    if report.duration_trends:
+        trend_table = Table(title="Duration trends")
+        for col in ("Workflow", "Runs", "Avg s", "First s", "Last s", "Regression"):
+            trend_table.add_column(col)
+        for t in report.duration_trends:
+            trend_table.add_row(
+                t.workflow, str(t.runs), str(t.avg_seconds),
+                str(t.first_seconds), str(t.last_seconds),
+                "yes" if t.regression else "no",
+            )
+        console.print(trend_table)
+
+
 @app.command("corpus-check")
 def corpus_check(
     path: str = typer.Option(

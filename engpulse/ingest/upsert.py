@@ -186,7 +186,7 @@ def upsert_ci_run(
     else:
         _apply(run, norm, (
             "repo_id", "pull_request_id", "commit_sha", "workflow", "status",
-            "conclusion", "run_attempt", "duration_seconds",
+            "conclusion", "run_attempt", "duration_seconds", "failed_tests",
             "run_started_at", "source_updated_at",
         ))
     session.flush()
