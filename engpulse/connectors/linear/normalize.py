@@ -69,5 +69,6 @@ def to_issue(dto: LinearIssueDTO, assignee_id: int | None = None) -> Issue:
         current_due_date=dto.due_date,
         transitions=[t.serializable() for t in dto.transitions],
         labels=dto.labels,
+        source_created_at=dto.created_at,
         source_updated_at=dto.updated_at,
     )

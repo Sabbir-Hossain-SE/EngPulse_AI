@@ -29,9 +29,16 @@ class CIHealthThresholds(BaseModel):
     duration_min_runs: int = 3
 
 
+class DeliveryThresholds(BaseModel):
+    stale_issue_days: int = 10
+    deadline_drift_min_moves: int = 2
+    reestimation_min_changes: int = 1
+
+
 class Thresholds(BaseModel):
     pr_flow: PRFlowThresholds = PRFlowThresholds()
     ci_health: CIHealthThresholds = CIHealthThresholds()
+    delivery: DeliveryThresholds = DeliveryThresholds()
 
 
 def load_thresholds(path: str | Path | None = None) -> Thresholds:

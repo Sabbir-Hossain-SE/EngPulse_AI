@@ -104,7 +104,7 @@ def upsert_issue(
             "external_id", "title", "project", "team_key", "assignee_id",
             "status", "status_type", "estimate", "estimate_history",
             "original_due_date", "current_due_date", "transitions",
-            "labels", "source_updated_at",
+            "labels", "source_created_at", "source_updated_at",
         ))
     session.flush()
     return issue

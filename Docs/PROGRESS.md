@@ -177,9 +177,28 @@ engpulse init-db && \
 (flip rate 0.5, runs 991000001/991000002); flaky detection scores
 **precision 1.0 / recall 1.0** vs the corpus.
 
-### Remaining sub-steps
-- ⬜ **3.3 — Delivery/Drift (Module D)**: cycle time, stale issues, deadline
-  drift, re-estimation, done-without-merged-PR → `DeliveryReport`; vs `deadline_drifts`.
+### Sub-step 3.3 — Delivery & Deadline-Drift Analyzer (Module D) ✅
+
+**What we built:** Issue cycle time, stale-issue detection, **deadline drift**
+(due-date moves from transition history), re-estimation, WIP-per-assignee, and
+the accountability gap **done-without-merged-PR** → typed `DeliveryReport` with
+issue-key + transition evidence. Ingestion now captures the Linear `createdAt`
+(`source_created_at`) for cycle time. New CLI: `engpulse delivery`.
+
+**Verify:**
+```bash
+pytest                                                                   # 50 passed
+engpulse init-db && \
+  engpulse ingest-github --repo acme/payments --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse ingest-linear --team PAY --source fixture --fixtures-dir datasets/synthetic && \
+  engpulse resolve && engpulse delivery --team PAY --as-of 2026-06-14
+```
+
+**Verified output:** PAY-12 flagged deadline_drift (3 moves, 2026-05-15→2026-06-30)
++ stale + re-estimation; PAY-20 flagged done_without_merged_pr (linked PR open).
+Drift detection scores **precision 1.0 / recall 1.0** vs the corpus.
+
+### Remaining sub-step
 - ⬜ **3.4 — Consolidated eval harness**: one `evaluate` CLI + combined
   precision/recall across detectors and entity resolution.
 

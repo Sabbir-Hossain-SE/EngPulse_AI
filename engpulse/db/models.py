@@ -164,6 +164,7 @@ class Issue(TimestampMixin, Base):
     current_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     transitions: Mapped[list | None] = mapped_column(JSON)
     labels: Mapped[list | None] = mapped_column(JSON)
+    source_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     source_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     assignee: Mapped["Person | None"] = relationship(foreign_keys=[assignee_id])
