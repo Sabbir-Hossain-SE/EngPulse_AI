@@ -34,8 +34,17 @@ from engpulse.resolve.pr_issue import link_prs_to_issues
 
 
 __all__ = [
-    "EvaluationReport", "run_evaluation", "ephemeral_corpus_session", "evaluate_agent",
+    "EvaluationReport", "run_evaluation", "ephemeral_corpus_session",
+    "evaluate_agent", "check_consistency",
 ]
+
+
+def check_consistency() -> bool:
+    """Regression guard: the full evaluation is deterministic across runs."""
+
+    first = run_evaluation()
+    second = run_evaluation()
+    return first.scores == second.scores and first.agent == second.agent
 
 
 class EvaluationReport(BaseModel):
