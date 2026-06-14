@@ -131,6 +131,30 @@ curl localhost:8000/health           # {"status":"ok",...}
 
 ---
 
+## Evaluation harness
+
+Detectors are measured, not asserted. The harness runs the full pipeline
+(ingest → resolve → detect) over a labeled synthetic corpus
+([datasets/synthetic/](datasets/synthetic/)) and scores every detector and the
+entity-resolution output against ground truth — on an ephemeral in-memory DB, so
+it needs **no services**:
+
+```bash
+engpulse evaluate                 # prints per-task precision/recall/F1
+engpulse evaluate --out eval.json # also writes a JSON report
+```
+
+| Task | Precision | Recall |
+|---|---|---|
+| stale_pr · flaky_test · deadline_drift | 1.00 | 1.00 |
+| pr_issue_link · identity_merge | 1.00 | 1.00 |
+
+> The corpus is a seed (a handful of deliberately injected cases); it grows toward
+> the PRD's 200-case target. The point is the *measurement loop* — every detector
+> is scored against labels, so quality can't silently regress.
+
+---
+
 ## Project layout
 
 ```
