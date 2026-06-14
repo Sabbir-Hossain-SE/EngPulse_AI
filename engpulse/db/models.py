@@ -80,9 +80,10 @@ class Person(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str | None] = mapped_column(String(256))
     role: Mapped[str | None] = mapped_column(String(64))
+    email: Mapped[str | None] = mapped_column(String(320), index=True)
     github_user_id: Mapped[int | None] = mapped_column(Integer, unique=True, index=True)
     github_login: Mapped[str | None] = mapped_column(String(256), index=True)
-    tracker_id: Mapped[str | None] = mapped_column(String(256))
+    tracker_id: Mapped[str | None] = mapped_column(String(256), unique=True, index=True)
     slack_id: Mapped[str | None] = mapped_column(String(256))
     teams: Mapped[list | None] = mapped_column(JSON)
     alert_history: Mapped[list | None] = mapped_column(JSON)
@@ -145,15 +146,23 @@ class Issue(TimestampMixin, Base):
     __tablename__ = "issues"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    external_id: Mapped[str | None] = mapped_column(String(256), unique=True, index=True)
     key: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    title: Mapped[str | None] = mapped_column(Text)
     project: Mapped[str | None] = mapped_column(String(256))
+    team_key: Mapped[str | None] = mapped_column(String(64))
     assignee_id: Mapped[int | None] = mapped_column(ForeignKey("people.id"))
     status: Mapped[str | None] = mapped_column(String(64))
+    status_type: Mapped[str | None] = mapped_column(String(64))
+    estimate: Mapped[float | None] = mapped_column(Float)
     estimate_history: Mapped[list | None] = mapped_column(JSON)
     original_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     current_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     transitions: Mapped[list | None] = mapped_column(JSON)
+    labels: Mapped[list | None] = mapped_column(JSON)
+    source_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    assignee: Mapped["Person | None"] = relationship(foreign_keys=[assignee_id])
     linked_prs: Mapped[list["PullRequest"]] = relationship(
         back_populates="linked_issue", foreign_keys="PullRequest.linked_issue_id"
     )

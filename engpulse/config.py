@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     github_repo: str = ""
     github_api_url: str = "https://api.github.com"
 
+    # --- Linear connector (issue tracker) ----------------------------------
+    linear_api_key: str = ""
+    linear_api_url: str = "https://api.linear.app/graphql"
+    linear_team_key: str = ""  # optional scope, e.g. "ENG"; empty = all teams
+
     # --- Ollama (model-agnostic LLM seam) ----------------------------------
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_chat_model: str = "llama3.1"
@@ -75,6 +80,9 @@ class Settings(BaseSettings):
             "github_repo": self.github_repo or "<unset>",
             "github_token": mask(self.github_token),
             "github_api_url": self.github_api_url,
+            "linear_api_key": mask(self.linear_api_key),
+            "linear_api_url": self.linear_api_url,
+            "linear_team_key": self.linear_team_key or "<all teams>",
             "ollama_base_url": self.ollama_base_url,
             "ollama_chat_model": self.ollama_chat_model,
             "ollama_embed_model": self.ollama_embed_model,

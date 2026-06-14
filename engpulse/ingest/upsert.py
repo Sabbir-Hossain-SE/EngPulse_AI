@@ -17,7 +17,9 @@ from engpulse.connectors.github.schemas import (
     PullRequestDTO,
     RepositoryDTO,
 )
-from engpulse.db.models import CIRun, Commit, Person, PullRequest, Repository
+from engpulse.connectors.linear import normalize as linear_normalize
+from engpulse.connectors.linear.schemas import LinearIssueDTO
+from engpulse.db.models import CIRun, Commit, Issue, Person, PullRequest, Repository
 
 
 def upsert_person(
@@ -41,6 +43,62 @@ def upsert_person(
         if not person.github_login and login:
             person.github_login = login
     return person
+
+
+def upsert_person_tracker(
+    session: Session,
+    tracker_id: str | None,
+    name: str | None,
+    email: str | None,
+) -> Person | None:
+    """Upsert a tracker (Linear) identity, keyed by tracker id then email.
+
+    GitHub-sourced people have no tracker_id, so they never collide here; the
+    cross-system merge of these separate identities happens in sub-step 2.3.
+    """
+
+    if not tracker_id and not email:
+        return None
+    person = None
+    if tracker_id:
+        person = session.scalars(
+            select(Person).where(Person.tracker_id == tracker_id)
+        ).first()
+    if person is None and email:
+        person = session.scalars(select(Person).where(Person.email == email)).first()
+    if person is None:
+        person = Person(tracker_id=tracker_id, email=email, name=name)
+        session.add(person)
+        session.flush()
+    else:
+        if not person.tracker_id and tracker_id:
+            person.tracker_id = tracker_id
+        if not person.email and email:
+            person.email = email
+        if not person.name and name:
+            person.name = name
+    return person
+
+
+def upsert_issue(
+    session: Session, dto: LinearIssueDTO, assignee_id: int | None
+) -> Issue:
+    issue = session.scalars(
+        select(Issue).where(Issue.key == dto.identifier)
+    ).first()
+    norm = linear_normalize.to_issue(dto, assignee_id=assignee_id)
+    if issue is None:
+        issue = norm
+        session.add(issue)
+    else:
+        _apply(issue, norm, (
+            "external_id", "title", "project", "team_key", "assignee_id",
+            "status", "status_type", "estimate", "estimate_history",
+            "original_due_date", "current_due_date", "transitions",
+            "labels", "source_updated_at",
+        ))
+    session.flush()
+    return issue
 
 
 def _apply(target, source, attrs: tuple[str, ...]) -> None:
