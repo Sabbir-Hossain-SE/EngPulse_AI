@@ -1,0 +1,9 @@
+{
+  "id": 700100200,
+  "name": "demo-repo",
+  "full_name": "engpulse-demo/demo-repo",
+  "owner": { "login": "engpulse-demo", "id": 9001 },
+  "default_branch": "main",
+  "html_url": "https://github.com/engpulse-demo/demo-repo",
+  "pushed_at": "2026-06-10T14:30:00Z"
+}

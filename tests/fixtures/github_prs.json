@@ -1,0 +1,52 @@
+[
+  {
+    "id": 555000001,
+    "number": 101,
+    "title": "Add retry/backoff to the GitHub client",
+    "state": "open",
+    "html_url": "https://github.com/engpulse-demo/demo-repo/pull/101",
+    "user": { "login": "alice", "id": 1001 },
+    "created_at": "2026-06-01T09:00:00Z",
+    "merged_at": null,
+    "closed_at": null,
+    "additions": 120,
+    "deletions": 14,
+    "changed_files": 5,
+    "requested_reviewers": [
+      { "login": "bob", "id": 1002 },
+      { "login": "carol", "id": 1003 }
+    ]
+  },
+  {
+    "id": 555000002,
+    "number": 102,
+    "title": "Normalize PR DTOs into the unified schema",
+    "state": "closed",
+    "html_url": "https://github.com/engpulse-demo/demo-repo/pull/102",
+    "user": { "login": "bob", "id": 1002 },
+    "created_at": "2026-05-28T11:15:00Z",
+    "merged_at": "2026-05-29T16:45:00Z",
+    "closed_at": "2026-05-29T16:45:00Z",
+    "additions": 64,
+    "deletions": 3,
+    "changed_files": 2,
+    "requested_reviewers": [
+      { "login": "alice", "id": 1001 }
+    ]
+  },
+  {
+    "id": 555000003,
+    "number": 103,
+    "title": "Wire pgvector extension at init time",
+    "state": "open",
+    "html_url": "https://github.com/engpulse-demo/demo-repo/pull/103",
+    "user": { "login": "alice", "id": 1001 },
+    "created_at": "2026-06-05T08:20:00Z",
+    "merged_at": null,
+    "closed_at": null,
+    "additions": 30,
+    "deletions": 1,
+    "changed_files": 1,
+    "requested_reviewers": []
+  }
+]

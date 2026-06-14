@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "engpulse"
+version = "0.1.0"
+description = "EngPulse AI — Engineering Org Intelligence Command Center (scaffold)"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.1",
+    "pgvector>=0.2.5",
+    "httpx>=0.27",
+    "tenacity>=8.2",
+    "typer>=0.12",
+    "rich>=13.7",
+    "celery>=5.3",
+    "redis>=5.0",
+    "langfuse>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+engpulse = "engpulse.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["engpulse*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"
