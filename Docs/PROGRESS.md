@@ -352,7 +352,7 @@ engpulse evaluate  # agent: recall/faithfulness/abstention all 1.00
 
 ---
 
-## Module 6 — Scoring + Alerts + Digests 🔨 (in progress)
+## Module 6 — Scoring + Alerts + Digests ✅ (complete)
 
 ### Sub-step 6.1 — Scoring engine (Module H) ✅
 
@@ -373,10 +373,33 @@ engpulse init-db && ...ingest... && engpulse resolve && \
 **Verified output:** review_flow 75 · delivery 45 · ci_test 90 · knowledge 80 →
 composite **70.0 = At Risk**, persisted with breakdown + delta.
 
-### Remaining sub-step
-- ⬜ **6.2 — Alert router + digests (Module K)**: detector flags → severity-
-  classified alerts routed to EM/TL/PM/IC, de-dup + suppression, daily digest +
-  weekly report (role-filtered), each alert with evidence/confidence/action/owner.
-  Closes out Module 6.
+### Sub-step 6.2 — Alert router + role-based digests (Module K) ✅
+
+**What we built:** A YAML-driven router (`config/alerts.yaml`) mapping detector
+flags → severity-classified alert types → recipient roles (EM/TL/PM/IC), with
+**de-duplication** (one alert per subject+type, merging reasons + escalating to
+max severity), **suppression** below a configurable floor, and a project
+health-drop alert. Role-filtered daily/weekly digests carrying
+evidence/confidence/action/owner. New CLI: `engpulse digest`.
+
+**Verify:**
+```bash
+pytest                                                  # 88 passed
+engpulse init-db && ...ingest... && engpulse resolve && \
+  engpulse digest --repo acme/payments --role EM --team PAY --as-of 2026-06-14
+```
+
+**Verified output:** EM digest = delivery_risk PAY-12 (3 flags de-duped) +
+knowledge_risk auth/tokens.py + project health-drop; TL digest = the flaky test;
+IC digest = the stalled-PR/issue execution items.
+
+---
+
+## What's next
+
+⬜ **Module 7 — API, Dashboard & Observability** (PRD §8.L, Milestone 5):
+FastAPI endpoints (projects/scores/insights + Ask EngPulse over SSE), Langfuse
+tracing on every LLM call, caching, and a role-based React dashboard. Surfaces
+everything built in Modules 1–6 over HTTP.
 
 > Per working agreement: checkpoint each sub-step before starting the next.

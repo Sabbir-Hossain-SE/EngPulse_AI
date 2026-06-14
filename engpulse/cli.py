@@ -429,6 +429,37 @@ def score_cmd(
     console.print(table)
 
 
+@app.command("digest")
+def digest_cmd(
+    role: str = typer.Option("EM", "--role", help="recipient role: EM | TL | PM | IC"),
+    period: str = typer.Option("daily", "--period", help="daily | weekly"),
+    repo: str = typer.Option(None, "--repo", help="owner/name (defaults to GITHUB_REPO)"),
+    team: str = typer.Option(None, "--team", help="Linear team key (defaults to LINEAR_TEAM_KEY)"),
+    as_of: str = typer.Option(None, "--as-of", help="ISO reference timestamp (default: now)"),
+) -> None:
+    """Role-based alert digest: routed, de-duplicated alerts for one recipient."""
+
+    from datetime import datetime, timezone
+
+    from engpulse.alerts import build_digest, render_digest, route_project
+    from engpulse.db.base import session_scope
+
+    target = repo or get_settings().github_repo
+    if not target:
+        console.print("[red]No repo given.[/red] Pass --repo owner/name or set GITHUB_REPO.")
+        raise typer.Exit(code=2)
+    team_key = team if team is not None else (get_settings().linear_team_key or None)
+    as_of_dt = (
+        datetime.fromisoformat(as_of).replace(tzinfo=timezone.utc)
+        if as_of else datetime.now(timezone.utc)
+    )
+
+    with session_scope() as session:
+        alerts, score = route_project(session, target, team_key=team_key, as_of=as_of_dt)
+    digest = build_digest(alerts, score, role=role, period=period)
+    console.print(render_digest(digest))
+
+
 @app.command("knowledge")
 def knowledge_cmd(
     repo: str = typer.Option(

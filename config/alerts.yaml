@@ -1,0 +1,22 @@
+# Alert routing & suppression (PRD §11). Maps alert types to recipient roles,
+# the recommended action per type, and the minimum severity worth emitting.
+
+routing:
+  delivery_risk: [EM, PM]
+  review_bottleneck: [TL]
+  ci_health: [TL]
+  knowledge_risk: [EM]
+  execution: [IC]
+
+actions:
+  delivery_risk: "Review the delivery plan with the owner and re-baseline dates."
+  review_bottleneck: "Rebalance reviews and assign additional reviewers."
+  ci_health: "Quarantine the flaky test and investigate the failure signature."
+  knowledge_risk: "De-risk the module by spreading ownership (pairing / reviews)."
+  execution: "Follow up on your stalled item and unblock it."
+
+# Drop anything below this severity (de-noise). low | medium | high | critical
+min_severity: low
+
+# Severity for CI flaky-test alerts (no intrinsic severity on the signal).
+flaky_alert_severity: medium
