@@ -24,6 +24,10 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+.cursor/
+.claude/
+Docs/
+docs/
 
 # Runtime
 *.log
